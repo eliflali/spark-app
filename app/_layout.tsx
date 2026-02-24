@@ -1,6 +1,7 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
+import { RevenueCatProvider } from '@/src/context/RevenueCatContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -33,9 +34,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <RouteGuard />
+          <RevenueCatProvider>
+            <RouteGuard />
+          </RevenueCatProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
