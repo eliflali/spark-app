@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   // ── Apple Sign-In ────────────────────────────────────────
   const handleAppleSignIn = async () => {
@@ -51,13 +52,16 @@ export default function LoginScreen() {
       return;
     }
     setLoading(true);
-    // Try sign-in first; if user doesn't exist, sign them up
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) {
-      const { error: signUpError } = await supabase.auth.signUp({ email, password });
-      if (signUpError) Alert.alert('Auth error', signUpError.message);
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) Alert.alert('Sign Up Error', error.message);
       else Alert.alert('Check your email', 'We sent a confirmation link.');
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) Alert.alert('Sign In Error', error.message);
     }
+    
     setLoading(false);
   };
 
@@ -113,7 +117,19 @@ export default function LoginScreen() {
                 shadowRadius: 16,
               }}>
               <Text className="text-midnight font-bold text-base">
-                {loading ? 'Please wait…' : 'Continue'}
+                {loading ? 'Please wait…' : (isSignUp ? 'Sign Up' : 'Log In')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Toggle Sign Up / Log In */}
+            <TouchableOpacity
+              onPress={() => setIsSignUp(!isSignUp)}
+              activeOpacity={0.7}
+              className="mt-2 items-center py-2">
+              <Text className="text-slate-muted text-sm font-medium">
+                {isSignUp
+                  ? 'Already have an account? Log In'
+                  : "Don't have an account? Sign Up"}
               </Text>
             </TouchableOpacity>
           </View>
