@@ -1,4 +1,4 @@
-import { Alert, Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import { Alert, Text, TouchableOpacity, View, ScrollView, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -30,7 +30,10 @@ export default function HomeScreen() {
 
         {/* Header */}
         <View className="items-center pt-20 pb-8">
-          <Text style={{ fontSize: 64 }}>🔥</Text>
+          <Image
+            source={require('@/assets/logo-transparent-bg.png')}
+            className="w-24 h-24 mb-4"
+          />
           <Text
             className="text-glacier text-4xl font-bold text-center mt-4"
             style={{ letterSpacing: -0.5 }}>
