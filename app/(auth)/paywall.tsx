@@ -82,8 +82,8 @@ export default function PaywallScreen() {
     const success = await purchasePackage(pkg);
     setPurchasing(false);
     if (success) {
-      await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
-      router.replace('/(root)/home');
+      // Direct them to create an account/log in FIRST
+      router.replace('/(auth)/login');
     }
   };
 
@@ -99,7 +99,7 @@ export default function PaywallScreen() {
   };
 
   const handleSkip = async () => {
-    await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
+    // Send to login first. ONBOARDING_KEY is set after invite-partner.
     router.replace('/(auth)/login');
   };
 

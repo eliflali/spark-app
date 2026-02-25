@@ -14,7 +14,8 @@ module.exports = {
         spark: '#F59E0B',
         rose: '#FB7185',
         glacier: '#F8FAFC',
-        'slate-muted': '#475569',
+        'slate-muted': '#94A3B8',
+        'tinted-slate': '#8E9AAF',
       },
       borderRadius: {
         '3xl': '24px',

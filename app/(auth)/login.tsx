@@ -7,19 +7,61 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Image,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { StatusBar } from 'expo-status-bar';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 
 type Mode = 'idle' | 'email';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+
+  // ── Logo Animations ─────────────────────────────────────────
+  const floatAnim = useSharedValue(0);
+  const pulseAnim = useSharedValue(0.85);
+
+  useState(() => {
+    // Floating effect (up and down 8px)
+    floatAnim.value = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    // Subtle opacity pulse (breathing)
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.85, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  });
+
+  const animatedLogoStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatAnim.value }],
+    opacity: pulseAnim.value,
+  }));
 
   // ── Apple Sign-In ────────────────────────────────────────
   const handleAppleSignIn = async () => {
@@ -32,11 +74,12 @@ export default function LoginScreen() {
       });
 
       if (credential.identityToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
+        const { error, data } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: credential.identityToken,
         });
         if (error) Alert.alert('Sign-in failed', error.message);
+        else if (data?.session) router.replace('/(auth)/invite-partner');
       }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') {
@@ -54,12 +97,14 @@ export default function LoginScreen() {
     setLoading(true);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error, data } = await supabase.auth.signUp({ email, password });
       if (error) Alert.alert('Sign Up Error', error.message);
+      else if (data?.session) router.replace('/(auth)/invite-partner');
       else Alert.alert('Check your email', 'We sent a confirmation link.');
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
       if (error) Alert.alert('Sign In Error', error.message);
+      else if (data?.session) router.replace('/(auth)/invite-partner');
     }
     
     setLoading(false);
@@ -74,7 +119,9 @@ export default function LoginScreen() {
       <View className="flex-1 justify-end px-6 pb-14">
         {/* Brand */}
         <View className="items-center mb-16">
-          <Text style={{ fontSize: 64 }}>🔥</Text>
+          <Animated.View style={animatedLogoStyle}>
+            <Image source={require('../../assets/logo-transparent-bg.png')} className="w-32 h-32" />
+          </Animated.View>
           <Text
             className="text-glacier text-5xl font-bold mt-3"
             style={{ letterSpacing: -1.5 }}>

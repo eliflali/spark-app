@@ -17,7 +17,8 @@ export function CommitmentScreen({
   const [pledgesChecked, setPledgesChecked] = useState([false, false, false]);
 
   // Phase 1 Anims
-  const quoteOpacity = useRef(new Animated.Value(0)).current;
+  const quote1Opacity = useRef(new Animated.Value(0)).current;
+  const quote2Opacity = useRef(new Animated.Value(0)).current;
 
   // Phase 2 Anims
   const commitHeaderAnim = useRef(new Animated.Value(0)).current;
@@ -38,9 +39,14 @@ export function CommitmentScreen({
   // ── Phase 1: Quote Animation ───────────────────────────────────────────────
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(quoteOpacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(quote1Opacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.delay(1200),
+      Animated.timing(quote2Opacity, { toValue: 1, duration: 1000, useNativeDriver: true }),
       Animated.delay(2000),
-      Animated.timing(quoteOpacity, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      Animated.parallel([
+        Animated.timing(quote1Opacity, { toValue: 0, duration: 1000, useNativeDriver: true }),
+        Animated.timing(quote2Opacity, { toValue: 0, duration: 1000, useNativeDriver: true })
+      ])
     ]).start(() => {
       setPhase(2);
     });
@@ -93,12 +99,20 @@ export function CommitmentScreen({
   if (phase === 1) {
     return (
       <View className="flex-1 items-center justify-center px-10">
-        <Animated.Text
-          style={{ opacity: quoteOpacity, lineHeight: 36 }}
-          className="text-glacier text-2xl text-center font-medium italic mb-20"
-        >
-          Great relationships aren't accidental.{'\n'}They're built with intention, daily.
-        </Animated.Text>
+        <View className="mb-20">
+          <Animated.Text
+            style={{ opacity: quote1Opacity, lineHeight: 36 }}
+            className="text-glacier text-2xl text-center font-medium italic"
+          >
+            Great relationships aren't accidental.
+          </Animated.Text>
+          <Animated.Text
+            style={{ opacity: quote2Opacity, lineHeight: 36 }}
+            className="text-glacier text-2xl text-center font-medium italic mt-2"
+          >
+            They're built with intention, daily.
+          </Animated.Text>
+        </View>
       </View>
     );
   }

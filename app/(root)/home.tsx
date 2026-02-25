@@ -1,8 +1,10 @@
-import { Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import { Alert, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '@/src/context/AuthContext';
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
+import { ONBOARDING_KEY } from '../(auth)/paywall';
 
 // Features gated behind premium
 const LOCKED_FEATURES = [
@@ -115,6 +117,33 @@ export default function HomeScreen() {
           className="mt-8 py-3 rounded-2xl border border-slate-muted/30 items-center">
           <Text className="text-slate-muted text-sm">Sign Out</Text>
         </TouchableOpacity>
+
+        {/* ── DEBUG ONLY (remove before production) ── */}
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              '🛠 Debug',
+              'Clear onboarding flag and sign out? This resets the app to a fresh-install state.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Reset',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await SecureStore.deleteItemAsync(ONBOARDING_KEY);
+                    await signOut();
+                  },
+                },
+              ]
+            );
+          }}
+          activeOpacity={0.7}
+          className="mt-3 py-3 rounded-2xl border border-rose/30 items-center"
+          style={{ backgroundColor: 'rgba(251,113,133,0.06)' }}
+        >
+          <Text className="text-rose text-xs font-semibold">🛠 Reset Onboarding State</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
