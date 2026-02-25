@@ -13,7 +13,8 @@
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@bacons/apple-targets"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -28,13 +29,18 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cankuslar.spark"
+      "bundleIdentifier": "com.cankuslar.spark",
+      "appleTeamId": "K58P9S6K53",
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.cankuslar.spark"]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.cankuslar.spark"
     }
   }
 }

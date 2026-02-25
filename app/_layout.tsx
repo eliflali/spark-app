@@ -6,7 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/src/lib/supabase';
-import { ONBOARDING_KEY } from './(auth)/paywall';
+import { ONBOARDING_KEY } from '@/src/lib/constants';
 
 import '../global.css';
 
@@ -49,8 +49,9 @@ function RouteGuard() {
     const inAuthGroup = segments[0] === '(auth)';
     const inRootGroup = segments[0] === '(root)';
     const isInvitePartner = (segments as string[])[1] === 'invite-partner';
+    const isPaywall = (segments as string[])[1] === 'paywall';
 
-    if (session && !inRootGroup && !isInvitePartner) {
+    if (session && !inRootGroup && !isInvitePartner && !isPaywall) {
       // Signed in and not in app area yet.
       // If we haven't fetched partner status yet, wait before routing.
       if (hasPartner === null) return;

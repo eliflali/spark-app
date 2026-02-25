@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -19,13 +19,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
 import { supabase } from '@/src/lib/supabase';
 
 type Mode = 'idle' | 'email';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>('idle');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +34,7 @@ export default function LoginScreen() {
   const floatAnim = useSharedValue(0);
   const pulseAnim = useSharedValue(0.85);
 
-  useState(() => {
+  useEffect(() => {
     // Floating effect (up and down 8px)
     floatAnim.value = withRepeat(
       withSequence(
@@ -56,7 +54,7 @@ export default function LoginScreen() {
       -1,
       true
     );
-  });
+  }, []);
 
   const animatedLogoStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: floatAnim.value }],
@@ -74,12 +72,12 @@ export default function LoginScreen() {
       });
 
       if (credential.identityToken) {
-        const { error, data } = await supabase.auth.signInWithIdToken({
+        const { error } = await supabase.auth.signInWithIdToken({
           provider: 'apple',
           token: credential.identityToken,
         });
         if (error) Alert.alert('Sign-in failed', error.message);
-        else if (data?.session) router.replace('/(auth)/invite-partner');
+        // RouteGuard handles navigation after session updates
       }
     } catch (e: any) {
       if (e.code !== 'ERR_REQUEST_CANCELED') {
@@ -99,12 +97,12 @@ export default function LoginScreen() {
     if (isSignUp) {
       const { error, data } = await supabase.auth.signUp({ email, password });
       if (error) Alert.alert('Sign Up Error', error.message);
-      else if (data?.session) router.replace('/(auth)/invite-partner');
-      else Alert.alert('Check your email', 'We sent a confirmation link.');
+      else if (!data?.session) Alert.alert('Check your email', 'We sent a confirmation link.');
+      // RouteGuard handles navigation after session updates
     } else {
-      const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) Alert.alert('Sign In Error', error.message);
-      else if (data?.session) router.replace('/(auth)/invite-partner');
+      // RouteGuard handles navigation after session updates
     }
     
     setLoading(false);

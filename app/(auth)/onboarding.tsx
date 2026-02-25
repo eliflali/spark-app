@@ -17,11 +17,11 @@ import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
 import LottieView from 'lottie-react-native';
 import { PrimaryButton } from '@/src/components/PrimaryButton';
-import { WelcomeScreen } from './onboarding/welcome';
-import { SurveyGoalScreen } from './onboarding/survey-goal';
-import { SurveyStatusScreen } from './onboarding/survey-status';
-import { AnalysisScreen } from './onboarding/analysis';
-import { CommitmentScreen } from './onboarding/commitment';
+import { WelcomeScreen } from '@/src/components/onboarding/welcome';
+import { SurveyGoalScreen } from '@/src/components/onboarding/survey-goal';
+import { SurveyStatusScreen } from '@/src/components/onboarding/survey-status';
+import { AnalysisScreen } from '@/src/components/onboarding/analysis';
+import { CommitmentScreen } from '@/src/components/onboarding/commitment';
 
 const { width } = Dimensions.get('window');
 

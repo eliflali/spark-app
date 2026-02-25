@@ -23,7 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/context/AuthContext';
-import { ONBOARDING_KEY } from './paywall';
+import { ONBOARDING_KEY } from '@/src/lib/constants';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

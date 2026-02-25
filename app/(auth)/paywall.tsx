@@ -12,7 +12,6 @@ import {
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { PurchasesPackage } from 'react-native-purchases';
-import * as SecureStore from 'expo-secure-store';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -25,8 +24,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
-
-export const ONBOARDING_KEY = 'spark.hasCompletedOnboarding';
 
 const FEATURES = [
   { icon: '💡', label: 'Deepen your bond — science-backed daily questions.' },
@@ -59,10 +56,9 @@ export default function PaywallScreen() {
   }));
 
   // If the user somehow already is premium, boot them out
-  if (isPremium) {
-    router.replace('/(root)/home');
-    return null;
-  }
+  useEffect(() => {
+    if (isPremium) router.replace('/(root)/home');
+  }, [isPremium]);
 
   // The first package in the Main Offering (monthly)
   const pkg: PurchasesPackage | undefined = offering?.availablePackages[0];

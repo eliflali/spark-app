@@ -2,9 +2,11 @@ import { Alert, Text, TouchableOpacity, View, ScrollView, Image } from 'react-na
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import { useEffect } from 'react';
+import { ExtensionStorage } from '@bacons/apple-targets';
 import { useAuth } from '@/src/context/AuthContext';
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
-import { ONBOARDING_KEY } from '../(auth)/paywall';
+import { ONBOARDING_KEY } from '@/src/lib/constants';
 
 // Features gated behind premium
 const LOCKED_FEATURES = [
@@ -17,6 +19,18 @@ export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const { isPremium } = useRevenueCat();
   const router = useRouter();
+
+  // Send sample data to the widget
+  useEffect(() => {
+    try {
+      const storage = new ExtensionStorage('group.com.cankuslar.spark');
+      storage.set('senderName', 'Spark ✨');
+      storage.set('text', 'You make every day brighter 💛');
+      ExtensionStorage.reloadWidget();
+    } catch (e) {
+      console.log('Widget storage not available:', e);
+    }
+  }, []);
 
   const goToPaywall = () => router.push('/(auth)/paywall');
 
