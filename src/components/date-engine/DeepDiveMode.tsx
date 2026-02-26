@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { supabase } from '@/src/lib/supabase';
 
 const { width, height } = Dimensions.get('window');
 
@@ -41,10 +42,12 @@ interface DeepDiveModeProps {
   scientificBasis: string;
   partnerName: string;
   myName: string;
+  sessionId?: string | null;
+  myUserId?: string;
   onComplete: () => void;
 }
 
-type Stage = 'input' | 'submitted' | 'revealed';
+type Stage = 'input' | 'waiting' | 'submitted' | 'revealed';
 
 // Confetti particle
 function Particle({ x, color, delay }: { x: number; color: string; delay: number }) {
@@ -101,9 +104,12 @@ export default function DeepDiveMode({
   scientificBasis,
   partnerName,
   myName,
+  sessionId,
+  myUserId,
   onComplete,
 }: DeepDiveModeProps) {
   const [myAnswer, setMyAnswer] = useState('');
+  const [partnerAnswer, setPartnerAnswer] = useState('');
   const [stage, setStage] = useState<Stage>('input');
   const [showParticles, setShowParticles] = useState(false);
 
@@ -111,16 +117,83 @@ export default function DeepDiveMode({
   const lockOpacity = useSharedValue(1);
   const partnerReveal = useSharedValue(0);
 
-  // Simulated "partner answer" — in a real app, this comes from Supabase
-  const partnerAnswer =
-    "Every moment with you feels like home. When you ask this question, I realize how much your presence has shaped who I am.";
+  // Poll or subscribe to session_answers
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    // Initial fetch to see if partner already answered
+    const fetchAnswers = async () => {
+      const { data, error } = await supabase
+        .from('session_answers')
+        .select('*')
+        .eq('session_id', sessionId)
+        .eq('step', 0);
+        
+      if (!error && data) {
+        let hasPartner = false;
+        let partnerAns = '';
+        for (const ans of data) {
+           if (ans.user_id !== myUserId) {
+             hasPartner = true;
+             partnerAns = ans.answer_text;
+           }
+        }
+        if (hasPartner) setPartnerAnswer(partnerAns);
+      }
+    };
+    fetchAnswers();
 
-  const handleSubmit = () => {
+    const channel = supabase
+      .channel(`answers:${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'session_answers',
+          filter: `session_id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const newRow = payload.new as any;
+          if (newRow && newRow.step === 0) {
+            if (newRow.user_id !== myUserId) {
+               setPartnerAnswer(newRow.answer_text);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [sessionId, myUserId]);
+
+  const handleSubmit = async () => {
     if (!myAnswer.trim()) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     setStage('submitted');
 
+    // Save to Supabase
+    if (sessionId && myUserId) {
+       await supabase.from('session_answers').upsert({
+          session_id: sessionId,
+          user_id: myUserId,
+          step: 0,
+          answer_text: myAnswer,
+       });
+       
+       if (!partnerAnswer) {
+          setStage('waiting');
+          return; // wait for partner
+       }
+    }
+    
+    triggerReveal();
+  };
+
+  const triggerReveal = () => {
     // Unlock partner box
     lockOpacity.value = withTiming(0, { duration: 500 });
     blurIntensity.value = withTiming(0, { duration: 600 });
@@ -133,6 +206,13 @@ export default function DeepDiveMode({
       partnerReveal.value = withSpring(1, { stiffness: 90 });
     }, 700);
   };
+
+  // If we are waiting, and partner answers, trigger reveal
+  useEffect(() => {
+    if (stage === 'waiting' && partnerAnswer) {
+       triggerReveal();
+    }
+  }, [stage, partnerAnswer]);
 
   const partnerRevealStyle = useAnimatedStyle(() => ({
     opacity: partnerReveal.value,
@@ -176,12 +256,21 @@ export default function DeepDiveMode({
               <Text style={styles.answerText}>{partnerAnswer}</Text>
             </Animated.View>
 
-            {/* Blur overlay — lifts when user submits */}
-            {stage === 'input' && (
+            {/* Blur overlay — lifts when user submits and partner is ready */}
+            {(stage === 'input' || stage === 'waiting') && (
               <BlurView tint="dark" intensity={20} style={StyleSheet.absoluteFillObject}>
                 <View style={styles.lockOverlay}>
-                  <Ionicons name="lock-closed" size={24} color="#F59E0B" />
-                  <Text style={styles.lockText}>Share your answer first</Text>
+                  {stage === 'waiting' ? (
+                    <>
+                      <Ionicons name="time-outline" size={24} color="#F59E0B" />
+                      <Text style={styles.lockText}>Waiting for partner...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="lock-closed" size={24} color="#F59E0B" />
+                      <Text style={styles.lockText}>Share your answer first</Text>
+                    </>
+                  )}
                 </View>
               </BlurView>
             )}
@@ -221,11 +310,11 @@ export default function DeepDiveMode({
                 disabled={!myAnswer.trim()}
                 activeOpacity={0.85}
               >
-                <Text style={styles.submitBtnText}>Reveal Both Answers ✦</Text>
+                <Text style={styles.submitBtnText}>Submit Answer ✦</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <Animated.View entering={FadeIn.duration(400)} style={[styles.answerBox, styles.submittedBox]}>
+            <Animated.View entering={FadeIn.duration(400)} style={[styles.answerBox, styles.submittedBox, stage === 'waiting' && { opacity: 0.6 }]}>
               <Text style={styles.answerText}>{myAnswer}</Text>
             </Animated.View>
           )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Animated, {
   FadeIn,
+  FadeInDown,
   FadeOut,
   SlideInDown,
   SlideOutDown,
@@ -52,6 +53,9 @@ interface DateControllerProps {
   activity: Activity | null;
   scientificBasis: string;
   spaceId: string | null;
+  /** Optional: live session ID for real-time sync between partners */
+  sessionId?: string | null;
+  myUserId?: string;
   myName: string;
   partnerName: string;
   onClose: () => void;
@@ -159,19 +163,62 @@ export default function DateController({
   activity,
   scientificBasis,
   spaceId,
+  sessionId,
+  myUserId,
   myName,
   partnerName,
   onClose,
 }: DateControllerProps) {
   const [completed, setCompleted] = useState(false);
   const [sparkScore, setSparkScore] = useState(0);
+  // Tracks whether the partner has advanced ahead (for Deep Dive step sync)
+  const [partnerIsReady, setPartnerIsReady] = useState(false);
+  const myCurrentStep = useRef(0);
 
   useEffect(() => {
     if (visible) {
       setCompleted(false);
+      setPartnerIsReady(false);
+      myCurrentStep.current = 0;
       loadSparkScore();
     }
   }, [visible]);
+
+  // ── Real-time subscription: watch partner's step progress ─────────────────
+  useEffect(() => {
+    if (!sessionId || !visible) return;
+
+    const channel = supabase
+      .channel(`session:${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'date_sessions',
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { current_step: number; status: string };
+          // If the session's current_step is ahead of where I am, partner is ready
+          if (
+            updated.status === 'active' &&
+            updated.current_step > myCurrentStep.current
+          ) {
+            setPartnerIsReady(true);
+          }
+          // If partner completed the session
+          if (updated.status === 'completed') {
+            setPartnerIsReady(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [sessionId, visible]);
 
   const loadSparkScore = async () => {
     try {
@@ -188,22 +235,53 @@ export default function DateController({
     setSparkScore(newScore);
     await AsyncStorage.setItem(SPARK_SCORE_KEY, String(newScore));
 
-    // Persist to Supabase date_sessions
-    if (spaceId && activity) {
+    // Update or create the date_session row
+    if (activity) {
       try {
-        await supabase.from('date_sessions').insert({
-          space_id: spaceId,
-          template_id: activity.id,
-          current_step: 1,
-          is_completed: true,
-        });
+        if (sessionId) {
+          // Update existing session to completed
+          await supabase
+            .from('date_sessions')
+            .update({
+              status: 'completed',
+              is_completed: true,
+              current_step: myCurrentStep.current + 1,
+              last_interaction_at: new Date().toISOString(),
+            })
+            .eq('id', sessionId);
+        } else if (spaceId) {
+          // Solo play — insert a completed session directly
+          await supabase.from('date_sessions').insert({
+            space_id: spaceId,
+            template_id: activity.id,
+            current_step: 1,
+            is_completed: true,
+            status: 'completed',
+            last_interaction_at: new Date().toISOString(),
+          });
+        }
       } catch (e) {
-        console.warn('[DateController] Supabase insert error:', e);
+        console.warn('[DateController] Supabase update error:', e);
       }
     }
 
     setCompleted(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  /** Called by Deep Dive when user moves to the next step */
+  const handleStepAdvance = async (step: number) => {
+    myCurrentStep.current = step;
+    setPartnerIsReady(false); // Reset banner since we're now in sync
+    if (sessionId) {
+      await supabase
+        .from('date_sessions')
+        .update({
+          current_step: step,
+          last_interaction_at: new Date().toISOString(),
+        })
+        .eq('id', sessionId);
+    }
   };
 
   const handleExitRequest = () => {
@@ -281,6 +359,20 @@ export default function DateController({
 
           {/* Content – mode router */}
           <View style={styles.content}>
+            {/* Partner-is-ready banner (Deep Dive step sync) */}
+            {partnerIsReady && !completed && (
+              <Animated.View
+                entering={FadeInDown.springify()}
+                exiting={FadeOut.duration(200)}
+                style={styles.partnerReadyBanner}
+              >
+                <Ionicons name="flash" size={14} color="#0F172A" />
+                <Text style={styles.partnerReadyText}>
+                  Partner is ready! Your turn.
+                </Text>
+              </Animated.View>
+            )}
+
             {completed ? (
               <SuccessScreen
                 activity={activity}
@@ -308,6 +400,8 @@ export default function DateController({
                 scientificBasis={scientificBasis}
                 partnerName={partnerName}
                 myName={myName}
+                sessionId={sessionId}
+                myUserId={myUserId}
                 onComplete={handleComplete}
               />
             )}
@@ -385,6 +479,29 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.08)',
   },
   content: {
+    flex: 1,
+  },
+  // Partner-ready banner (Deep Dive real-time sync)
+  partnerReadyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 20,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: '#F59E0B',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  partnerReadyText: {
+    color: '#0F172A',
+    fontWeight: '700',
+    fontSize: 13,
     flex: 1,
   },
 });

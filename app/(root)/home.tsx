@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Platform,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -16,11 +17,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
-  FadeInUp,
+  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -32,6 +32,9 @@ import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/context/AuthContext';
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
+import { useActiveSession } from '@/src/hooks/useActiveSession';
+import guidedDatesData from '@/assets/guided-dates/guided-dates.json';
+import type { Category } from '@/src/components/guided-dates/types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,6 +152,19 @@ function PartnerHeader({
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getActivityTitle(templateId: string): string {
+  const allCategories = (guidedDatesData as { guided_dates: Category[] }).guided_dates;
+  for (const cat of allCategories) {
+    const found = cat.activities.find((a) => a.id === templateId);
+    if (found) return found.title;
+  }
+  return 'Guided Date';
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
+
 export default function HomeScreen() {
   const { user, signOut } = useAuth();
   const { isPremium } = useRevenueCat();
@@ -162,6 +178,39 @@ export default function HomeScreen() {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Real-time session hook ─────────────────────────────────────────────────
+  const { incomingSession, acceptSession } = useActiveSession();
+
+  // ── Logo pulse animation (activates when there's an incoming invite) ────────
+  const logoScale = useSharedValue(1);
+  const logoAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  useEffect(() => {
+    if (incomingSession) {
+      logoScale.value = withRepeat(
+        withSequence(
+          withTiming(1.1, { duration: 700, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1.0, { duration: 700, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      logoScale.value = withTiming(1.0, { duration: 300 });
+    }
+  }, [!!incomingSession]);
+
+  // ── Accept handler ────────────────────────────────────────────────────────
+  const handleAcceptInvite = async () => {
+    if (!incomingSession) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await acceptSession(incomingSession.id);
+    // Navigate to Dates tab so DateController can open
+    router.push('/(root)/dates');
+  };
 
   // ── Load data ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -250,10 +299,15 @@ export default function HomeScreen() {
         {/* ── Top Header ── */}
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.topHeader}>
           <PartnerHeader myProfile={myProfile} partner={partner} />
-          <Image
-            source={require('@/assets/logo-transparent-bg.png')}
-            style={styles.logo}
-          />
+          <Animated.View style={logoAnimStyle}>
+            {incomingSession && (
+              <View style={styles.logoGlowRing} pointerEvents="none" />
+            )}
+            <Image
+              source={require('@/assets/logo-transparent-bg.png')}
+              style={styles.logo}
+            />
+          </Animated.View>
         </Animated.View>
 
         {/* ── Greeting ── */}
@@ -270,6 +324,46 @@ export default function HomeScreen() {
             </View>
           )}
         </Animated.View>
+
+        {/* ── Incoming Invitation Card ── */}
+        {incomingSession && (
+          <Animated.View entering={FadeInDown.springify()} exiting={FadeOut.duration(300)}>
+            <BlurView tint="dark" intensity={55} style={styles.inviteCard}>
+              <LinearGradient
+                colors={['rgba(245,158,11,0.22)', 'rgba(251,113,133,0.08)', 'transparent']}
+                style={StyleSheet.absoluteFillObject}
+              />
+              {/* Animated border glow */}
+              <View style={styles.inviteCardBorder} pointerEvents="none" />
+
+              <View style={styles.inviteCardInner}>
+                <View style={styles.inviteLiveBadge}>
+                  <View style={styles.inviteLiveDot} />
+                  <Text style={styles.inviteLiveBadgeText}>LIVE INVITE</Text>
+                </View>
+
+                <Text style={styles.inviteHeadline}>⚡ Partner is waiting!</Text>
+                <Text style={styles.inviteDateTitle}>
+                  {getActivityTitle(incomingSession.template_id)}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={handleAcceptInvite}
+                  style={styles.joinBtn}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={['#FBBF24', '#F59E0B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <Text style={styles.joinBtnText}>Join Partner ✦</Text>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </Animated.View>
+        )}
 
         {/* ── Daily Spark Card ── */}
         <Animated.View entering={FadeInDown.delay(160).springify()}>
@@ -403,8 +497,6 @@ export default function HomeScreen() {
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 function getTimeOfDay() {
   const h = new Date().getHours();
   if (h < 12) return 'morning';
@@ -434,6 +526,88 @@ const styles = StyleSheet.create({
   logo: {
     width: 44,
     height: 44,
+  },
+  logoGlowRing: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 40,
+    backgroundColor: 'rgba(245,158,11,0.25)',
+  },
+  // Invitation card
+  inviteCard: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  inviteCardBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(245,158,11,0.45)',
+  },
+  inviteCardInner: {
+    padding: 22,
+    gap: 12,
+  },
+  inviteLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(245,158,11,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+  },
+  inviteLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F59E0B',
+  },
+  inviteLiveBadgeText: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  inviteHeadline: {
+    color: '#F8FAFC',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  inviteDateTitle: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  joinBtn: {
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginTop: 4,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  joinBtnText: {
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
   greetingRow: {
     flexDirection: 'row',

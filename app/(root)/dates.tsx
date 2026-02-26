@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
+  FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
@@ -32,93 +33,14 @@ import { useAuth } from '@/src/context/AuthContext';
 // Date Engine
 import DateController, { type Activity } from '@/src/components/date-engine/DateController';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Guided Dates Components
+import { type Mode, type Category } from '@/src/components/guided-dates/types';
+import { AnimatedGradientCard } from '@/src/components/guided-dates/AnimatedGradientCard';
 
-type Mode = 'DEEP_DIVE' | 'ENVELOPE' | 'RESONANCE';
+// Real-time session hook
+import { useActiveSession } from '@/src/hooks/useActiveSession';
 
-interface Category {
-  category: string;
-  scientific_basis: string;
-  activities: Activity[];
-}
 
-// ── Mode Config ───────────────────────────────────────────────────────────────
-
-const MODE_CONFIG: Record<Mode, { icon: string; label: string; color: string; bg: string }> = {
-  DEEP_DIVE: {
-    icon: 'water-outline',
-    label: 'Deep Dive',
-    color: '#818CF8',
-    bg: 'rgba(129,140,248,0.15)',
-  },
-  ENVELOPE: {
-    icon: 'mail-outline',
-    label: 'Envelope',
-    color: '#F59E0B',
-    bg: 'rgba(245,158,11,0.15)',
-  },
-  RESONANCE: {
-    icon: 'radio-outline',
-    label: 'Resonance',
-    color: '#34D399',
-    bg: 'rgba(52,211,153,0.15)',
-  },
-};
-
-// ── Activity Card ─────────────────────────────────────────────────────────────
-
-function ActivityCard({ activity, onPress }: { activity: Activity; onPress: () => void }) {
-  const cfg = MODE_CONFIG[activity.mode as Mode];
-
-  const glowPulse = useSharedValue(0.4);
-
-  useEffect(() => {
-    glowPulse.value = withRepeat(
-      withSequence(
-        withTiming(0.75, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.35, { duration: 2200, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glowPulse.value,
-  }));
-
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.card}>
-      <BlurView tint="dark" intensity={40} style={StyleSheet.absoluteFillObject} />
-
-      {/* Animated colour glow */}
-      <Animated.View
-        style={[styles.cardGlow, glowStyle, { backgroundColor: cfg.color }]}
-        pointerEvents="none"
-      />
-
-      {/* Glass sheen */}
-      <LinearGradient
-        colors={['rgba(255,255,255,0.07)', 'transparent']}
-        style={StyleSheet.absoluteFillObject}
-        pointerEvents="none"
-      />
-
-      <View style={styles.cardContent}>
-        <View style={[styles.cardIconCircle, { backgroundColor: cfg.bg, borderColor: cfg.color + '55' }]}>
-          <Ionicons name={cfg.icon as any} size={28} color={cfg.color} />
-        </View>
-
-        <View style={styles.cardTextWrap}>
-          <Text style={styles.cardTitle}>{activity.title}</Text>
-          <View style={[styles.modeBadge, { backgroundColor: cfg.bg }]}>
-            <Text style={[styles.modeBadgeText, { color: cfg.color }]}>{cfg.label}</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-}
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -128,6 +50,8 @@ export default function DatesScreen() {
   const [activeFilter, setActiveFilter] = useState<Mode | 'ALL'>('ALL');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedBasis, setSelectedBasis] = useState('');
+  // Track the sessionId of the session User A just started
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [myName, setMyName] = useState('You');
@@ -135,17 +59,21 @@ export default function DatesScreen() {
 
   const categories = (guidedDates as { guided_dates: Category[] }).guided_dates;
 
+  // ── Real-time session hook ─────────────────────────────────────────────────
+  const { incomingSession, acceptSession, cancelSession, startSession } = useActiveSession();
+
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('display_name, partner_id')
+          .select('display_name, partner_id, space_id')
           .eq('id', user.id)
           .single();
 
         if (profile?.display_name) setMyName(profile.display_name.split(' ')[0]);
+        if (profile?.space_id) setSpaceId(profile.space_id);
 
         if (profile?.partner_id) {
           const { data: partner } = await supabase
@@ -154,23 +82,6 @@ export default function DatesScreen() {
             .eq('id', profile.partner_id)
             .single();
           if (partner?.display_name) setPartnerName(partner.display_name.split(' ')[0]);
-        }
-
-        const { data: member } = await supabase
-          .from('space_members')
-          .select('space_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (member?.space_id) {
-          setSpaceId(member.space_id);
-        } else {
-          const { data: space } = await supabase
-            .from('spaces')
-            .select('id')
-            .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-            .maybeSingle();
-          if (space?.id) setSpaceId(space.id);
         }
       } catch (e) {
         console.warn('[DatesScreen] load error:', e);
@@ -195,11 +106,49 @@ export default function DatesScreen() {
     }))
     .filter((cat) => cat.activities.length > 0);
 
-  const handleCardPress = useCallback((activity: Activity, basis: string) => {
+  const handleCardPress = useCallback(async (activity: Activity, basis: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // If we have a spaceId, create (or retrieve) the pending session for User A
+    if (spaceId) {
+      const sessionId = await startSession(activity.id, spaceId);
+      setCurrentSessionId(sessionId);
+    }
     setSelectedActivity(activity);
     setSelectedBasis(basis);
-  }, []);
+  }, [spaceId, startSession]);
+
+  // Accept the incoming invitation (User B flow)
+  const handleAcceptInvite = useCallback(async () => {
+    if (!incomingSession) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await acceptSession(incomingSession.id);
+    // Find the activity from guidedDates JSON
+    const allCats = (guidedDates as { guided_dates: Category[] }).guided_dates;
+    let foundActivity: Activity | null = null;
+    let foundBasis = '';
+    for (const cat of allCats) {
+      const a = cat.activities.find((x) => x.id === incomingSession.template_id);
+      if (a) {
+        foundActivity = a as Activity;
+        foundBasis = cat.scientific_basis;
+        break;
+      }
+    }
+    if (foundActivity) {
+      setCurrentSessionId(incomingSession.id);
+      setSelectedActivity(foundActivity);
+      setSelectedBasis(foundBasis);
+    }
+  }, [incomingSession, acceptSession]);
+
+  // When DateController closes, cancel the session if it was just pending
+  const handleDateControllerClose = useCallback(async () => {
+    if (currentSessionId) {
+      await cancelSession(currentSessionId);
+      setCurrentSessionId(null);
+    }
+    setSelectedActivity(null);
+  }, [currentSessionId, cancelSession]);
 
   return (
     <View style={styles.root}>
@@ -241,7 +190,50 @@ export default function DatesScreen() {
         contentContainerStyle={styles.activityListMain}
         showsVerticalScrollIndicator={false}
       >
-        {filteredCategories.map((cat, ci) => (
+        {/* ── Live Invitation Card (User B sees this) ── */}
+        {incomingSession && (
+          <Animated.View
+            entering={FadeInDown.springify()}
+            exiting={FadeOut.duration(300)}
+            style={styles.liveInviteWrapper}
+          >
+            <BlurView tint="dark" intensity={50} style={styles.liveInviteCard}>
+              <LinearGradient
+                colors={['rgba(245,158,11,0.2)', 'rgba(251,113,133,0.08)', 'transparent']}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <View style={styles.liveInviteCardBorder} pointerEvents="none" />
+              <View style={styles.liveInviteInner}>
+                <View style={styles.liveBadge}>
+                  <View style={styles.liveBadgeDot} />
+                  <Text style={styles.liveBadgeText}>LIVE INVITE</Text>
+                </View>
+                <Text style={styles.liveInviteTitle}>
+                  {(guidedDates as { guided_dates: Category[] }).guided_dates
+                    .flatMap((c) => c.activities)
+                    .find((a) => a.id === incomingSession.template_id)?.title ?? 'Guided Date'}
+                </Text>
+                <Text style={styles.liveInviteDesc}>
+                  ⚡ Your partner started a date. Join them now!
+                </Text>
+                <TouchableOpacity
+                  onPress={handleAcceptInvite}
+                  style={styles.acceptBtn}
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={['#FBBF24', '#F59E0B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <Text style={styles.acceptBtnText}>Accept &amp; Join ✦</Text>
+                </TouchableOpacity>
+              </View>
+            </BlurView>
+          </Animated.View>
+        )}
+      {filteredCategories.map((cat, ci) => (
           <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
             <View style={styles.catHeader}>
               <Text style={styles.catTitle}>{cat.category}</Text>
@@ -252,13 +244,14 @@ export default function DatesScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.carouselContainer}
-              snapToInterval={180}
+              snapToInterval={176}
               decelerationRate="fast"
             >
               {cat.activities.map((activity) => (
-                <ActivityCard
+                <AnimatedGradientCard
                   key={activity.id}
                   activity={activity as Activity}
+                  category={cat.category}
                   onPress={() => handleCardPress(activity as Activity, cat.scientific_basis)}
                 />
               ))}
@@ -275,9 +268,11 @@ export default function DatesScreen() {
         activity={selectedActivity}
         scientificBasis={selectedBasis}
         spaceId={spaceId}
+        sessionId={currentSessionId}
+        myUserId={user?.id}
         myName={myName}
         partnerName={partnerName}
-        onClose={() => setSelectedActivity(null)}
+        onClose={handleDateControllerClose}
       />
     </View>
   );
@@ -305,7 +300,7 @@ const styles = StyleSheet.create({
     color: '#F8FAFC',
     fontSize: 13,
     marginTop: 4,
-    opacity: 0.6,
+    opacity: 0.45,
   },
   filterRow: {
     paddingHorizontal: 20,
@@ -357,70 +352,82 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 16,
   },
-  // Card
-  card: {
-    width: 164,
-    height: 200,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+
+  // ── Live Invitation Card ────────────────────────────────────────────────────
+  liveInviteWrapper: {
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  liveInviteCard: {
+    borderRadius: 28,
     overflow: 'hidden',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  cardGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  cardContent: {
-    flex: 1,
-    padding: 18,
-    justifyContent: 'space-between',
-  },
-  cardIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTextWrap: {
-    gap: 8,
-  },
-  cardTitle: {
-    color: '#F8FAFC',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    lineHeight: 22,
-  },
-  modeBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  modeBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  // Pre-reveal
-  transitionBg: {
+  liveInviteCardBorder: {
     ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(245,158,11,0.45)',
   },
-  transitionFlap: {
-    width: 160,
-    height: 160,
-    borderRadius: 20,
+  liveInviteInner: {
+    padding: 22,
+    gap: 12,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(245,158,11,0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+  },
+  liveBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F59E0B',
+  },
+  liveBadgeText: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  liveInviteTitle: {
+    color: '#F8FAFC',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  liveInviteDesc: {
+    color: '#94A3B8',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  acceptBtn: {
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
     overflow: 'hidden',
+    marginTop: 4,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  acceptBtnText: {
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
 });

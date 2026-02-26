@@ -1,7 +1,7 @@
 {
     "guided_dates": [
         {
-            "category": "Cognitive Deepening",
+            "category": "Inner Worlds",
             "scientific_basis": "Gottman Love Maps",
             "activities": [
                 {
@@ -37,7 +37,7 @@
             ]
         },
         {
-            "category": "Novelty & Expansion",
+            "category": "New Horizons",
             "scientific_basis": "Arthur Aron Self-Expansion Model",
             "activities": [
                 {
@@ -73,7 +73,7 @@
             ]
         },
         {
-            "category": "Biochemical Bond",
+            "category": "Pure Presence",
             "scientific_basis": "Oxytocin & Nervous System Regulation",
             "activities": [
                 {
@@ -175,7 +175,7 @@
             ]
         },
         {
-            "category": "Neuro-Synchrony",
+            "category": "Neuro-Parallel Rhythms",
             "scientific_basis": "Mirror Neurons & Physiological Attunement",
             "activities": [
                 {
@@ -205,7 +205,7 @@
             ]
         },
         {
-            "category": "Shared Meaning",
+            "category": "Common Dreams",
             "scientific_basis": "Gottman Sound Relationship House",
             "activities": [
                 {
@@ -229,7 +229,7 @@
             ]
         },
         {
-            "category": "Active Exploration",
+            "category": "Playful Discovery",
             "scientific_basis": "Dopamine & Shared Learning",
             "activities": [
                 {
