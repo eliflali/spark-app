@@ -1,0 +1,256 @@
+{
+    "guided_dates": [
+        {
+            "category": "Cognitive Deepening",
+            "scientific_basis": "Gottman Love Maps",
+            "activities": [
+                {
+                    "id": "cog_001",
+                    "title": "The Unasked Night",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Exchange 5 questions you've never asked each other to update your internal maps."
+                },
+                {
+                    "id": "cog_002",
+                    "title": "Values Alignment",
+                    "mode": "DEEP_DIVE",
+                    "desc": "If the world ended tomorrow, which 3 shared values would we carry with us?"
+                },
+                {
+                    "id": "cog_003",
+                    "title": "Childhood Museum",
+                    "mode": "ENVELOPE",
+                    "desc": "Look at childhood photos and explain what that child was feeling in that moment."
+                },
+                {
+                    "id": "cog_004",
+                    "title": "The Future Blueprint",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Write a shared digital letter to your future selves 5 years from now and lock it."
+                },
+                {
+                    "id": "cog_005",
+                    "title": "Inner World Spy",
+                    "mode": "ENVELOPE",
+                    "desc": "Secretly learn the top 3 stressors your partner has this week and surprise them with a solution."
+                }
+            ]
+        },
+        {
+            "category": "Novelty & Expansion",
+            "scientific_basis": "Arthur Aron Self-Expansion Model",
+            "activities": [
+                {
+                    "id": "nov_001",
+                    "title": "Adrenaline Route",
+                    "mode": "ENVELOPE",
+                    "desc": "Try something neither of you has ever done (climbing, dancing, exotic cuisine)."
+                },
+                {
+                    "id": "nov_002",
+                    "title": "Random Direction Walk",
+                    "mode": "RESONANCE",
+                    "desc": "Let the app decide every turn at intersections; get lost and explore together."
+                },
+                {
+                    "id": "nov_003",
+                    "title": "The 10 TL Challenge",
+                    "mode": "ENVELOPE",
+                    "desc": "Go to a market and find the object that will make your partner laugh the most within a tiny budget."
+                },
+                {
+                    "id": "nov_004",
+                    "title": "Mystery Adventure",
+                    "mode": "ENVELOPE",
+                    "desc": "Follow a coordinate given by the app and photograph the most interesting detail you find there."
+                },
+                {
+                    "id": "nov_005",
+                    "title": "Blind Drawing",
+                    "mode": "ENVELOPE",
+                    "desc": "Draw each other's portrait without looking at the paper and without lifting the pen."
+                }
+            ]
+        },
+        {
+            "category": "Biochemical Bond",
+            "scientific_basis": "Oxytocin & Nervous System Regulation",
+            "activities": [
+                {
+                    "id": "bio_001",
+                    "title": "The 20-Second Hug",
+                    "mode": "RESONANCE",
+                    "desc": "Hold each other until both nervous systems regulate and relax (min 20 seconds)."
+                },
+                {
+                    "id": "bio_002",
+                    "title": "6-Second Kiss Ritual",
+                    "mode": "RESONANCE",
+                    "desc": "A conscious connection longer than a peck to signal the brain to lower stress."
+                },
+                {
+                    "id": "bio_003",
+                    "title": "The Silent Connection",
+                    "mode": "RESONANCE",
+                    "desc": "Walk hand-in-hand for 15 mins in total silence, focusing only on ambient sounds and breathing."
+                },
+                {
+                    "id": "bio_004",
+                    "title": "Sensate Focus",
+                    "mode": "RESONANCE",
+                    "desc": "Guided non-genital touch session focusing purely on sensory pleasure without pressure."
+                },
+                {
+                    "id": "bio_005",
+                    "title": "Aroma Therapy Meditation",
+                    "mode": "RESONANCE",
+                    "desc": "Sit eye-to-eye for 10 mins accompanied by a single scent (lavender, sandalwood, etc.)."
+                }
+            ]
+        },
+        {
+            "category": "Repair & Philosophy",
+            "scientific_basis": "Kintsugi & Omotenashi Principles",
+            "activities": [
+                {
+                    "id": "phi_001",
+                    "title": "Kintsugi Night",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Discuss a past conflict and identify what you learned—turning the 'crack' into gold."
+                },
+                {
+                    "id": "phi_002",
+                    "title": "Omotenashi Challenge",
+                    "mode": "ENVELOPE",
+                    "desc": "Anticipate a need of your partner before they ask and fulfill it today."
+                },
+                {
+                    "id": "phi_003",
+                    "title": "Wabi-Sabi Walk",
+                    "mode": "ENVELOPE",
+                    "desc": "Find 'imperfectly beautiful' things in nature and tell your partner your favorite flaw of theirs."
+                },
+                {
+                    "id": "phi_004",
+                    "title": "The Gratitude Loop",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Spend 10 mins saying only sentences that start with 'I am glad you are here because...'."
+                },
+                {
+                    "id": "phi_005",
+                    "title": "Midnight Picnic",
+                    "mode": "ENVELOPE",
+                    "desc": "Indoor picnic by candlelight, phones on airplane mode, pure focus on each other."
+                }
+            ]
+        },
+        {
+            "category": "Attachment Security",
+            "scientific_basis": "Emotionally Focused Therapy (EFT)",
+            "activities": [
+                {
+                    "id": "eft_001",
+                    "title": "Safe Harbor Talk",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Ask: 'What do I fear most when we fight?' Practice active listening to build safety."
+                },
+                {
+                    "id": "eft_002",
+                    "title": "Music of Our Souls",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Play a song that represents a feeling you can't put into words and explain why."
+                },
+                {
+                    "id": "eft_003",
+                    "title": "Vulnerability Map",
+                    "mode": "ENVELOPE",
+                    "desc": "Show where you feel stress in your body; have your partner touch that area to soothe you."
+                },
+                {
+                    "id": "eft_004",
+                    "title": "Repair Attempt Workshop",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Pick a small past tension and re-enact it using scientific repair phrases."
+                }
+            ]
+        },
+        {
+            "category": "Neuro-Synchrony",
+            "scientific_basis": "Mirror Neurons & Physiological Attunement",
+            "activities": [
+                {
+                    "id": "neu_001",
+                    "title": "Mirroring Movement",
+                    "mode": "RESONANCE",
+                    "desc": "Follow your partner's movements slowly like a mirror for 5 mins to sync brains."
+                },
+                {
+                    "id": "neu_002",
+                    "title": "The Breath Connection",
+                    "mode": "RESONANCE",
+                    "desc": "Sit back-to-back and try to align your breathing rhythms for 10 mins."
+                },
+                {
+                    "id": "neu_003",
+                    "title": "Eye Contact Marathon",
+                    "mode": "RESONANCE",
+                    "desc": "Silent eye contact for 4 mins to activate emotional synchrony."
+                },
+                {
+                    "id": "neu_004",
+                    "title": "Hug Until Relaxed",
+                    "mode": "RESONANCE",
+                    "desc": "A second variation: Focus purely on the release of physical tension during the embrace."
+                }
+            ]
+        },
+        {
+            "category": "Shared Meaning",
+            "scientific_basis": "Gottman Sound Relationship House",
+            "activities": [
+                {
+                    "id": "shr_001",
+                    "title": "Dream Architecture",
+                    "mode": "ENVELOPE",
+                    "desc": "Create a shared vision board for the top floor of your 'Relationship House'."
+                },
+                {
+                    "id": "shr_002",
+                    "title": "Kintsugi Coffee",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Share how the relationship has made you a stronger individual over coffee."
+                },
+                {
+                    "id": "shr_003",
+                    "title": "The Check-in Ritual",
+                    "mode": "DEEP_DIVE",
+                    "desc": "Weekly 'Emotional Bank Account' meeting to track positive investments made."
+                }
+            ]
+        },
+        {
+            "category": "Active Exploration",
+            "scientific_basis": "Dopamine & Shared Learning",
+            "activities": [
+                {
+                    "id": "act_001",
+                    "title": "New Skill Date",
+                    "mode": "ENVELOPE",
+                    "desc": "Try learning a new skill together for 30 mins (origami, coding, a game)."
+                },
+                {
+                    "id": "act_002",
+                    "title": "Scent Memory Walk",
+                    "mode": "RESONANCE",
+                    "desc": "Find 3 scents outdoors that remind you of childhood or early dating days."
+                },
+                {
+                    "id": "act_003",
+                    "title": "Role Play Adventure",
+                    "mode": "ENVELOPE",
+                    "desc": "Meet at a cafe pretending to be strangers and 're-meet' for the first time."
+                }
+            ]
+        }
+    ]
+}

@@ -4,8 +4,12 @@ import {
   Alert,
   Clipboard,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   Share,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -25,17 +29,6 @@ import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/context/AuthContext';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function generateSparkCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = 'SP-';
-  for (let i = 0; i < 4; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InvitePartnerScreen() {
@@ -47,6 +40,11 @@ export default function InvitePartnerScreen() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [partnerJoined, setPartnerJoined] = useState(false);
+
+  // Join-by-code state
+  const [partnerCode, setPartnerCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   // ── Pulsing logo animation ─────────────────────────────────────────────────
   const floatAnim = useSharedValue(0);
@@ -85,9 +83,6 @@ export default function InvitePartnerScreen() {
   const createOrFetchSpace = async () => {
     setLoading(true);
     try {
-      // getSession() ensures the JWT token is fully hydrated from SecureStore
-      // before ANY db write — without this, the first request after app reload
-      // can fire before the token is attached to the client, causing 42501.
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       console.log('[InvitePartner] session uid:', session?.user?.id ?? '(none)', '| error:', sessionError);
       if (!session) {
@@ -112,8 +107,6 @@ export default function InvitePartnerScreen() {
         setSpaceId(existing.id);
         setSparkCode(existing.invite_code);
       } else {
-        // Space doesn't exist yet. Use an RPC (SECURITY DEFINER) to create
-        // the space + link the profile atomically, bypassing the RLS RETURNING conflict.
         console.log('[InvitePartner] No space yet, calling create_space_for_user RPC...');
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('create_space_for_user');
@@ -179,8 +172,6 @@ export default function InvitePartnerScreen() {
   const handleSendInvite = async () => {
     if (!sparkCode) return;
     const message = `I found a special space for us to grow closer. Join me on Spark using my code: ${sparkCode}. Let's keep our flame alive! 🔥`;
-
-    console.log("sparkCode", sparkCode);
     try {
       const result = await Share.share({ message });
       if (result.action === Share.sharedAction) {
@@ -188,6 +179,44 @@ export default function InvitePartnerScreen() {
       }
     } catch (e) {
       Alert.alert('Could not open share sheet.');
+    }
+  };
+
+  const handleJoinByCode = async () => {
+    const trimmed = partnerCode.trim().toUpperCase();
+    if (!trimmed) return;
+
+    setJoining(true);
+    setJoinError(null);
+
+    try {
+      const { data, error } = await supabase.rpc('join_space_by_code', { p_code: trimmed });
+
+      if (error) {
+        // Map Postgres exception names to friendly messages
+        const msg = error.message ?? '';
+        if (msg.includes('code_not_found')) {
+          setJoinError('No space found with that code. Double-check and try again.');
+        } else if (msg.includes('space_full')) {
+          setJoinError('This space already has two members.');
+        } else if (msg.includes('already_joined')) {
+          setJoinError('You are already in this space!');
+        } else {
+          setJoinError('Something went wrong. Please try again.');
+        }
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
+      // Success!
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await SecureStore.setItemAsync(ONBOARDING_KEY, 'true');
+      router.replace('/(root)/home');
+    } catch (e) {
+      console.warn('[InvitePartner] join error:', JSON.stringify(e));
+      setJoinError('Something went wrong. Please try again.');
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -199,97 +228,197 @@ export default function InvitePartnerScreen() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <View className="flex-1 bg-midnight px-6">
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={{ flex: 1, backgroundColor: '#0B0F1A' }}>
 
-      {/* Skip */}
-      <TouchableOpacity
-        onPress={handleSkip}
-        hitSlop={12}
-        className="absolute top-16 right-6 z-20"
-      >
-        <Text className="text-slate-muted text-sm uppercase tracking-wide font-medium">Skip</Text>
-      </TouchableOpacity>
-
-      <View className="flex-1 items-center justify-center">
-
-        {/* Pulsing Logo */}
-        <Animated.View style={[animatedLogoStyle, { marginBottom: 36 }]}>
-          <Image
-            source={require('../../assets/logo-transparent-bg.png')}
-            style={{ width: 80, height: 80 }}
-          />
-        </Animated.View>
-
-        {/* Header */}
-        <Text
-          className="text-glacier text-4xl font-bold text-center mb-3"
-          style={{ letterSpacing: -1, lineHeight: 44 }}
-        >
-          Invite your<Text className="text-spark"> partner</Text>
-        </Text>
-        <Text className="text-slate-muted text-base text-center leading-6 mb-10 px-4">
-          Every spark is brighter together. Connect with your partner to start your journey.
-        </Text>
-
-        {/* Invite Card */}
-        <BlurView
-          tint="dark"
-          intensity={50}
-          className="w-full rounded-3xl border border-white/10 overflow-hidden mb-8"
-        >
-          <View className="p-8 items-center">
-            <Text className="text-slate-muted text-xs uppercase tracking-widest mb-4 font-semibold">
-              Your Spark Code
-            </Text>
-
-            {loading ? (
-              <ActivityIndicator color="#F59E0B" />
-            ) : (
-              <TouchableOpacity onPress={handleCopyCode} activeOpacity={0.7}>
-                <Text
-                  className="text-glacier font-bold text-center"
-                  style={{ fontSize: 40, letterSpacing: 4 }}
-                >
-                  {sparkCode}
-                </Text>
-                <Text className="text-slate-muted text-xs text-center mt-3">
-                  {copied ? '✓ Copied!' : 'Tap to copy'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </BlurView>
-
-        {/* Send Invite Button */}
+        {/* Skip */}
         <TouchableOpacity
-          onPress={handleSendInvite}
-          disabled={loading || !sparkCode}
-          activeOpacity={0.85}
-          className="w-full rounded-3xl py-5 items-center mb-6"
-          style={{
-            backgroundColor: '#F59E0B',
-            shadowColor: '#F59E0B',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.45,
-            shadowRadius: 20,
-            opacity: loading ? 0.5 : 1,
-          }}
+          onPress={handleSkip}
+          hitSlop={12}
+          style={{ position: 'absolute', top: 64, right: 24, zIndex: 20 }}
         >
-          <Text className="text-midnight text-lg font-bold">Send Invite 💌</Text>
+          <Text style={{ color: '#64748B', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '600' }}>
+            Skip
+          </Text>
         </TouchableOpacity>
 
-        {/* Waiting indicator */}
-        {!partnerJoined ? (
-          <View className="flex-row items-center gap-2">
-            <ActivityIndicator size="small" color="#475569" />
-            <Text className="text-slate-muted text-sm">Waiting for your partner to join...</Text>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingTop: 100, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Pulsing Logo */}
+          <Animated.View style={[animatedLogoStyle, { marginBottom: 36 }]}>
+            <Image
+              source={require('../../assets/logo-transparent-bg.png')}
+              style={{ width: 80, height: 80 }}
+            />
+          </Animated.View>
+
+          {/* Header */}
+          <Text
+            style={{ color: '#E2EAF4', fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 12, letterSpacing: -1, lineHeight: 44 }}
+          >
+            {'Invite your '}
+            <Text style={{ color: '#F59E0B' }}>partner</Text>
+          </Text>
+          <Text style={{ color: '#64748B', fontSize: 15, textAlign: 'center', lineHeight: 24, marginBottom: 32, paddingHorizontal: 16 }}>
+            Every spark is brighter together. Connect with your partner to start your journey.
+          </Text>
+
+          {/* ── Share Your Code Card ── */}
+          <BlurView
+            tint="dark"
+            intensity={50}
+            style={{ width: '100%', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 16 }}
+          >
+            <View style={{ padding: 32, alignItems: 'center' }}>
+              <Text style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16, fontWeight: '600' }}>
+                Your Spark Code
+              </Text>
+
+              {loading ? (
+                <ActivityIndicator color="#F59E0B" />
+              ) : (
+                <TouchableOpacity onPress={handleCopyCode} activeOpacity={0.7}>
+                  <Text
+                    style={{ color: '#E2EAF4', fontWeight: 'bold', textAlign: 'center', fontSize: 40, letterSpacing: 4 }}
+                  >
+                    {sparkCode}
+                  </Text>
+                  <Text style={{ color: '#64748B', fontSize: 12, textAlign: 'center', marginTop: 12 }}>
+                    {copied ? '✓ Copied!' : 'Tap to copy'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </BlurView>
+
+          {/* Send Invite Button */}
+          <TouchableOpacity
+            onPress={handleSendInvite}
+            disabled={loading || !sparkCode}
+            activeOpacity={0.85}
+            style={{
+              width: '100%',
+              borderRadius: 24,
+              paddingVertical: 18,
+              alignItems: 'center',
+              marginBottom: 12,
+              backgroundColor: '#F59E0B',
+              shadowColor: '#F59E0B',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.45,
+              shadowRadius: 20,
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            <Text style={{ color: '#0B0F1A', fontSize: 17, fontWeight: 'bold' }}>Send Invite 💌</Text>
+          </TouchableOpacity>
+
+          {/* Waiting / joined indicator */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 32 }}>
+            {!partnerJoined ? (
+              <>
+                <ActivityIndicator size="small" color="#475569" />
+                <Text style={{ color: '#64748B', fontSize: 14 }}>Waiting for your partner to join...</Text>
+              </>
+            ) : (
+              <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: 'bold' }}>
+                ✓ Partner joined! Taking you in...
+              </Text>
+            )}
           </View>
-        ) : (
-          <View className="flex-row items-center gap-2">
-            <Text className="text-spark text-sm font-bold">✓ Partner joined! Taking you in...</Text>
+
+          {/* ── Divider ── */}
+          <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', marginBottom: 28 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
+            <Text style={{ color: '#475569', fontSize: 12, marginHorizontal: 12, fontWeight: '600' }}>OR</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' }} />
           </View>
-        )}
+
+          {/* ── Join by Partner's Code ── */}
+          <BlurView
+            tint="dark"
+            intensity={50}
+            style={{ width: '100%', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}
+          >
+            <View style={{ padding: 28, alignItems: 'center' }}>
+              <Text style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 6, fontWeight: '600' }}>
+                Have a code?
+              </Text>
+              <Text style={{ color: '#475569', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+                Enter your partner's Spark code to join their space.
+              </Text>
+
+              {/* Code Input */}
+              <TextInput
+                value={partnerCode}
+                onChangeText={(text) => {
+                  setPartnerCode(text.toUpperCase());
+                  if (joinError) setJoinError(null);
+                }}
+                placeholder="SP-XXXX"
+                placeholderTextColor="#334155"
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={7}
+                style={{
+                  width: '100%',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderWidth: 1,
+                  borderColor: joinError ? '#EF4444' : 'rgba(255,255,255,0.1)',
+                  borderRadius: 16,
+                  paddingVertical: 16,
+                  paddingHorizontal: 20,
+                  color: '#E2EAF4',
+                  fontSize: 26,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  letterSpacing: 4,
+                  marginBottom: 12,
+                }}
+              />
+
+              {/* Error message */}
+              {joinError && (
+                <Text style={{ color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 12 }}>
+                  {joinError}
+                </Text>
+              )}
+
+              {/* Join Button */}
+              <TouchableOpacity
+                onPress={handleJoinByCode}
+                disabled={joining || partnerCode.trim().length < 6}
+                activeOpacity={0.85}
+                style={{
+                  width: '100%',
+                  borderRadius: 20,
+                  paddingVertical: 16,
+                  alignItems: 'center',
+                  backgroundColor: '#1E293B',
+                  borderWidth: 1,
+                  borderColor: partnerCode.trim().length >= 6 ? '#F59E0B' : 'rgba(255,255,255,0.1)',
+                  opacity: joining || partnerCode.trim().length < 6 ? 0.5 : 1,
+                }}
+              >
+                {joining ? (
+                  <ActivityIndicator color="#F59E0B" />
+                ) : (
+                  <Text style={{ color: '#F59E0B', fontSize: 16, fontWeight: 'bold' }}>
+                    Join Partner's Space 🔥
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+
+        </ScrollView>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
