@@ -94,7 +94,7 @@ export function VibeCheck({ onComplete }: Props) {
   };
 
   return (
-    <Animated.View layout={Layout.springify()} className="px-5 mb-6 mt-5">
+    <Animated.View layout={Layout.springify()} className="px-5 mb-6">
       <BackgroundGlow step={step} />
 
       {/* Progress Bar */}

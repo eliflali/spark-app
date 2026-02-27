@@ -204,8 +204,22 @@ export default function DatesScreen() {
       >
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()} className={`px-5 pb-5 ${Platform.OS === 'ios' ? 'pt-20' : 'pt-11'}`}>
-          <Text className="text-glacier text-[28px] font-bold tracking-tighter">Guided Dates</Text>
-          <Text className="text-glacier text-[12px] mt-2">Science-backed experiences for two</Text>
+          {isLibraryExpanded ? (
+            <TouchableOpacity 
+              onPress={() => setIsLibraryExpanded(false)}
+              className="flex-row items-center gap-3 pt-2"
+            >
+              <View className="bg-white/10 w-10 h-10 rounded-full items-center justify-center">
+                <Ionicons name="arrow-back" size={20} color="#F8FAFC" />
+              </View>
+              <Text className="text-glacier text-[28px] font-bold tracking-tighter">Library</Text>
+            </TouchableOpacity>
+          ) : (
+            <View>
+              <Text className="text-glacier text-[28px] font-bold tracking-tighter">Guided Dates</Text>
+              <Text className="text-glacier text-[12px] mt-2">Science-backed experiences for two</Text>
+            </View>
+          )}
         </Animated.View>
         {/* ── Live Invitation Card (User B sees this) ── */}
         {incomingSession && (
@@ -256,7 +270,22 @@ export default function DatesScreen() {
         {!isLibraryExpanded && (
           <View>
              {!suggestedDate ? (
-               <VibeCheck onComplete={handleVibeCheckComplete} />
+               <View>
+                 <VibeCheck onComplete={handleVibeCheckComplete} />
+                 <Animated.View entering={FadeInDown.delay(500).springify()} className="px-5 items-center mt-2">
+                   <TouchableOpacity
+                     onPress={() => {
+                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                       setIsLibraryExpanded(true);
+                     }}
+                     activeOpacity={0.7}
+                     className="py-3 px-6 rounded-full bg-white/5 border border-white/10 flex-row items-center gap-2"
+                   >
+                     <Text className="text-white/80 font-bold text-[14px] tracking-wide">Browse Library</Text>
+                     <Ionicons name="arrow-forward" size={16} color="white" />
+                   </TouchableOpacity>
+                 </Animated.View>
+               </View>
              ) : suggestedMatch ? (
                <TodayMatchCard 
                  activity={suggestedMatch.activity} 
@@ -272,16 +301,8 @@ export default function DatesScreen() {
         )}
 
         {/* ── State C: The Library ── */}
-        {(isLibraryExpanded || (!suggestedDate && categories.length > 0)) && (
-          <View className={!isLibraryExpanded && !suggestedDate ? 'opacity-40 pointer-events-none' : ''}>
-             {isLibraryExpanded && suggestedDate && (
-                <Animated.View entering={FadeInDown.springify()} className="px-5 mb-6 flex-row items-center justify-between">
-                  <Text className="text-[#94A3B8] font-bold text-[14px] uppercase tracking-wider">All Experiences</Text>
-                  <TouchableOpacity onPress={() => setIsLibraryExpanded(false)}>
-                    <Text className="text-[#38BDF8] font-bold">Show Match</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-             )}
+        {isLibraryExpanded && categories.length > 0 && (
+          <View>
             {categories.map((cat, ci) => (
               <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
             <View className="px-5 mb-4">
