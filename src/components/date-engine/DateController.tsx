@@ -46,6 +46,8 @@ export interface Activity {
   title: string;
   mode: Mode;
   desc: string;
+  location?: string;
+  energy?: string;
 }
 
 interface DateControllerProps {
@@ -95,39 +97,39 @@ function SuccessScreen({
   };
 
   return (
-    <View style={ss.container}>
+    <View className="flex-1 items-center justify-center p-6">
       {/* Background glow */}
-      <Animated.View style={[ss.glow, glowStyle]} pointerEvents="none" />
+      <Animated.View className="absolute top-[-100px] left-[-100px] right-[-100px] h-[400px] rounded-full bg-[#F59E0B]/10" style={[glowStyle]} pointerEvents="none" />
 
-      <Animated.View entering={SlideInDown.springify()} style={ss.card}>
-        <BlurView tint="dark" intensity={60} style={StyleSheet.absoluteFillObject} />
+      <Animated.View entering={SlideInDown.springify()} className="w-full rounded-[28px] overflow-hidden border border-[#F59E0B]/20 p-7 gap-5 items-center bg-[#0F172A]/85">
+        <BlurView tint="dark" intensity={60} className="absolute top-0 bottom-0 left-0 right-0" />
         <LinearGradient
           colors={['rgba(245,158,11,0.12)', 'transparent']}
-          style={StyleSheet.absoluteFillObject}
+          className="absolute top-0 bottom-0 left-0 right-0"
         />
 
         {/* Trophy icon */}
-        <View style={ss.iconRing}>
-          <LinearGradient colors={['#FBBF24', '#F59E0B', '#D97706']} style={StyleSheet.absoluteFillObject} />
-          <Text style={ss.iconText}>✦</Text>
+        <View className="w-[72px] h-[72px] rounded-full overflow-hidden items-center justify-center" style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 10 }}>
+          <LinearGradient colors={['#FBBF24', '#F59E0B', '#D97706']} className="absolute top-0 bottom-0 left-0 right-0" />
+          <Text className="text-[#0F172A] text-[28px] font-bold">✦</Text>
         </View>
 
-        <Text style={ss.title}>Session Complete!</Text>
-        <Text style={ss.subtitle}>{modeLabels[activity.mode]}: {activity.title}</Text>
+        <Text className="text-[#F8FAFC] text-[26px] font-bold tracking-tighter text-center">Session Complete!</Text>
+        <Text className="text-[#94A3B8] text-[14px] text-center leading-[21px]">{modeLabels[activity.mode]}: {activity.title}</Text>
 
         {/* Spark Score */}
-        <View style={ss.scoreRow}>
-          <Text style={ss.scoreLabel}>Spark Score</Text>
-          <View style={ss.scorePill}>
-            <Text style={ss.scoreValue}>{sparkScore}</Text>
+        <View className="flex-row items-center justify-between w-full bg-[#F59E0B]/10 rounded-2xl p-4 border border-[#F59E0B]/15">
+          <Text className="text-[#F8FAFC] text-[15px] font-semibold">Spark Score</Text>
+          <View className="bg-[#F59E0B] rounded-xl px-3.5 py-1">
+            <Text className="text-[#0F172A] font-extrabold text-[16px]">{sparkScore}</Text>
           </View>
         </View>
 
         {/* Share to Widget */}
-        <View style={ss.shareRow}>
-          <View style={ss.shareTextBlock}>
-            <Text style={ss.shareTitle}>Share to Widget</Text>
-            <Text style={ss.shareDesc}>Pin this memory to your partner's home screen</Text>
+        <View className="flex-row items-center justify-between w-full bg-white/5 rounded-2xl p-4 border border-white/10 gap-3">
+          <View className="flex-1 gap-[3px]">
+            <Text className="text-[#F8FAFC] text-[14px] font-semibold">Share to Widget</Text>
+            <Text className="text-[#475569] text-[12px] leading-[17px]">Pin this memory to your partner's home screen</Text>
           </View>
           <Switch
             value={shareEnabled}
@@ -142,14 +144,15 @@ function SuccessScreen({
 
         {/* Dismiss */}
         <TouchableOpacity
-          style={ss.doneBtn}
+          className="bg-[#F59E0B] rounded-[20px] py-4 px-10 w-full items-center"
+          style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}
           activeOpacity={0.85}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             onDismiss();
           }}
         >
-          <Text style={ss.doneBtnText}>Back to Dates ✦</Text>
+          <Text className="text-[#0F172A] font-bold text-[16px]">Back to Dates ✦</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -320,37 +323,38 @@ export default function DateController({
       presentationStyle="overFullScreen"
       transparent
     >
-      <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} style={styles.overlay}>
+      <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} className="flex-1 justify-end">
         {/* Dark backdrop */}
-        <View style={styles.backdrop} />
+        <View className="absolute top-0 bottom-0 left-0 right-0 bg-black/75" />
 
         <Animated.View
           entering={SlideInDown.springify().stiffness(100)}
           exiting={SlideOutDown.duration(280)}
-          style={styles.sheet}
+          className="bg-[#0F172A]/95 rounded-t-[32px] overflow-hidden border border-white/5 border-b-0"
+          style={{ height: height * 0.92 }}
         >
-          <BlurView tint="dark" intensity={50} style={StyleSheet.absoluteFillObject} />
+          <BlurView tint="dark" intensity={50} className="absolute top-0 bottom-0 left-0 right-0" />
 
           {/* Top accent gradient */}
           <LinearGradient
             colors={[accentColor + '18', 'transparent']}
-            style={[StyleSheet.absoluteFillObject, { height: 180 }]}
+            className="absolute top-0 left-0 right-0 h-[180px]"
           />
 
           {/* Handle */}
-          <View style={styles.handle} />
+          <View className="w-9 h-1 rounded-full bg-white/15 self-center mt-3 mb-1" />
 
           {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={[styles.modeDot, { backgroundColor: accentColor }]} />
-              <Text style={styles.headerMode}>
+          <View className="flex-row items-center justify-between px-5 py-3 border-b border-b-white/5">
+            <View className="flex-row items-center gap-2">
+              <View className="w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }} />
+              <Text className="text-[#94A3B8] text-[12px] font-semibold uppercase tracking-wider">
                 {activity.mode.replace('_', ' ')}
               </Text>
             </View>
             <TouchableOpacity
               onPress={handleExitRequest}
-              style={styles.closeBtn}
+              className="w-9 h-9 rounded-full bg-white/5 items-center justify-center border border-white/5"
               activeOpacity={0.7}
             >
               <Ionicons name="close" size={20} color="#64748B" />
@@ -358,16 +362,17 @@ export default function DateController({
           </View>
 
           {/* Content – mode router */}
-          <View style={styles.content}>
+          <View className="flex-1">
             {/* Partner-is-ready banner (Deep Dive step sync) */}
             {partnerIsReady && !completed && (
               <Animated.View
                 entering={FadeInDown.springify()}
                 exiting={FadeOut.duration(200)}
-                style={styles.partnerReadyBanner}
+                className="flex-row items-center gap-2 mx-5 mt-3 px-3.5 py-2.5 rounded-2xl bg-[#F59E0B]"
+                style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 }}
               >
                 <Ionicons name="flash" size={14} color="#0F172A" />
-                <Text style={styles.partnerReadyText}>
+                <Text className="text-[#0F172A] font-bold text-[13px] flex-1">
                   Partner is ready! Your turn.
                 </Text>
               </Animated.View>
@@ -412,229 +417,4 @@ export default function DateController({
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-  },
-  sheet: {
-    height: height * 0.92,
-    backgroundColor: 'rgba(15,23,42,0.97)',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-    borderBottomWidth: 0,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  modeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  headerMode: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  content: {
-    flex: 1,
-  },
-  // Partner-ready banner (Deep Dive real-time sync)
-  partnerReadyBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 20,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    backgroundColor: '#F59E0B',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  partnerReadyText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontSize: 13,
-    flex: 1,
-  },
-});
-
-// ── Success Screen Styles ─────────────────────────────────────────────────────
-
-const ss = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  glow: {
-    position: 'absolute',
-    top: -100,
-    left: -100,
-    right: -100,
-    height: 400,
-    borderRadius: 999,
-    backgroundColor: 'rgba(245,158,11,0.08)',
-  },
-  card: {
-    width: '100%',
-    borderRadius: 28,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.2)',
-    padding: 28,
-    gap: 20,
-    alignItems: 'center',
-    backgroundColor: 'rgba(15,23,42,0.85)',
-  },
-  iconRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 10,
-  },
-  iconText: {
-    color: '#0F172A',
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  title: {
-    color: '#F8FAFC',
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#94A3B8',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: 'rgba(245,158,11,0.08)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.15)',
-  },
-  scoreLabel: {
-    color: '#F8FAFC',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  scorePill: {
-    backgroundColor: '#F59E0B',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-  },
-  scoreValue: {
-    color: '#0F172A',
-    fontWeight: '800',
-    fontSize: 16,
-  },
-  shareRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    gap: 12,
-  },
-  shareTextBlock: {
-    flex: 1,
-    gap: 3,
-  },
-  shareTitle: {
-    color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  shareDesc: {
-    color: '#475569',
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  doneBtn: {
-    backgroundColor: '#F59E0B',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    width: '100%',
-    alignItems: 'center',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  doneBtnText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-});

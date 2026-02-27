@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
   Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -40,6 +39,11 @@ import { AnimatedGradientCard } from '@/src/components/guided-dates/AnimatedGrad
 // Real-time session hook
 import { useActiveSession } from '@/src/hooks/useActiveSession';
 
+// Date Matchmaker
+import { useSuggestedDate } from '@/src/hooks/useSuggestedDate';
+import { VibeCheck, type VibeData } from '@/src/components/guided-dates/VibeCheck';
+import { TodayMatchCard } from '@/src/components/guided-dates/TodayMatchCard';
+
 
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -59,8 +63,11 @@ export default function DatesScreen() {
 
   const categories = (guidedDates as { guided_dates: Category[] }).guided_dates;
 
-  // ── Real-time session hook ─────────────────────────────────────────────────
+  const [isLibraryExpanded, setIsLibraryExpanded] = useState(false);
+
+  // ── Real-time hooks ────────────────────────────────────────────────────────
   const { incomingSession, acceptSession, cancelSession, startSession } = useActiveSession();
+  const { suggestedDate, createSuggestion } = useSuggestedDate();
 
   useEffect(() => {
     if (!user) return;
@@ -88,23 +95,6 @@ export default function DatesScreen() {
       }
     })();
   }, [user]);
-
-  const filters: Array<{ key: Mode | 'ALL'; label: string }> = [
-    { key: 'ALL', label: '✦ All' },
-    { key: 'DEEP_DIVE', label: '💧 Deep Dive' },
-    { key: 'ENVELOPE', label: '✉️ Envelope' },
-    { key: 'RESONANCE', label: '📡 Resonance' },
-  ];
-
-  const filteredCategories = categories
-    .map((cat) => ({
-      ...cat,
-      activities:
-        activeFilter === 'ALL'
-          ? cat.activities
-          : cat.activities.filter((a) => a.mode === activeFilter),
-    }))
-    .filter((cat) => cat.activities.length > 0);
 
   const handleCardPress = useCallback(async (activity: Activity, basis: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -150,100 +140,159 @@ export default function DatesScreen() {
     setSelectedActivity(null);
   }, [currentSessionId, cancelSession]);
 
+  // Matchmaking Algorithm
+  const handleVibeCheckComplete = async (data: VibeData) => {
+    if (!spaceId) return;
+
+    let matches: { activity: Activity, basis: string }[] = [];
+
+    categories.forEach(cat => {
+      cat.activities.forEach(act => {
+        let score = 0;
+        if (act.location === data.location) score++;
+        if (act.energy === data.energy) score++;
+        
+        const isRomantic = cat.category === 'Pure Presence' || cat.category === 'Neuro-Parallel Rhythms' || act.mode === 'RESONANCE';
+        const isDeep = cat.category === 'Repair & Philosophy' || cat.category === 'Attachment Security' || act.mode === 'DEEP_DIVE';
+        const isFun = cat.category === 'New Horizons' || cat.category === 'Playful Discovery' || act.mode === 'ENVELOPE';
+
+        if (data.vibe === 'Romantic' && isRomantic) score += 2;
+        if (data.vibe === 'Deep' && isDeep) score += 2;
+        if (data.vibe === 'Fun' && isFun) score += 2;
+
+        if (score >= 2) {
+          matches.push({ activity: act as Activity, basis: cat.scientific_basis });
+        }
+      });
+    });
+
+    if (matches.length === 0) {
+      const randomCat = categories[Math.floor(Math.random() * categories.length)];
+      const randomAct = randomCat.activities[Math.floor(Math.random() * randomCat.activities.length)];
+      matches.push({ activity: randomAct as Activity, basis: randomCat.scientific_basis });
+    }
+
+    // Top 3 matches or whatever matches exist
+    matches.sort(() => 0.5 - Math.random());
+    const bestMatch = matches[0];
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await createSuggestion(bestMatch.activity.id, data, spaceId);
+  };
+
+  const getSuggestedActivity = () => {
+    if (!suggestedDate) return null;
+    for (const cat of categories) {
+      const a = cat.activities.find((x) => x.id === suggestedDate.suggested_activity_id);
+      if (a) return { activity: a as Activity, basis: cat.scientific_basis };
+    }
+    return null;
+  };
+
+  const suggestedMatch = getSuggestedActivity();
+
   return (
-    <View style={styles.root}>
+    <View className="flex-1 bg-midnight">
       <StatusBar style="light" />
 
-      {/* Header */}
-      <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.header}>
-        <Text style={styles.headerTitle}>Guided Dates</Text>
-        <Text style={styles.headerSub}>Science-backed experiences for two</Text>
-      </Animated.View>
-
-      {/* Filter Pills */}
-      <Animated.View entering={FadeInDown.delay(100).springify()}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {filters.map((f) => (
-            <TouchableOpacity
-              key={f.key}
-              onPress={() => {
-                setActiveFilter(f.key);
-                Haptics.selectionAsync();
-              }}
-              style={[styles.filterPill, activeFilter === f.key && styles.filterPillActive]}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.filterText, activeFilter === f.key && styles.filterTextActive]}>
-                {f.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </Animated.View>
+      
 
       {/* Horizontal Carousels */}
       <ScrollView
-        contentContainerStyle={styles.activityListMain}
+        contentContainerStyle={{ paddingBottom: 40, gap: 32 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
+        <Animated.View entering={FadeInDown.delay(50).springify()} className={`px-5 pb-5 ${Platform.OS === 'ios' ? 'pt-20' : 'pt-11'}`}>
+          <Text className="text-glacier text-[28px] font-bold tracking-tighter">Guided Dates</Text>
+          <Text className="text-glacier text-[12px] mt-2">Science-backed experiences for two</Text>
+        </Animated.View>
         {/* ── Live Invitation Card (User B sees this) ── */}
         {incomingSession && (
           <Animated.View
             entering={FadeInDown.springify()}
             exiting={FadeOut.duration(300)}
-            style={styles.liveInviteWrapper}
+            className="px-5 mb-2"
           >
-            <BlurView tint="dark" intensity={50} style={styles.liveInviteCard}>
+            <BlurView tint="dark" intensity={50} className="rounded-[28px] overflow-hidden" style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 24, elevation: 12 }}>
               <LinearGradient
                 colors={['rgba(245,158,11,0.2)', 'rgba(251,113,133,0.08)', 'transparent']}
-                style={StyleSheet.absoluteFillObject}
+                className="absolute top-0 bottom-0 left-0 right-0"
               />
-              <View style={styles.liveInviteCardBorder} pointerEvents="none" />
-              <View style={styles.liveInviteInner}>
-                <View style={styles.liveBadge}>
-                  <View style={styles.liveBadgeDot} />
-                  <Text style={styles.liveBadgeText}>LIVE INVITE</Text>
+              <View className="absolute top-0 bottom-0 left-0 right-0 rounded-[28px] border-[1.5px] border-[#F59E0B]/45" pointerEvents="none" />
+              <View className="p-[22px] gap-3">
+                <View className="flex-row items-center gap-1.5 self-start bg-[#F59E0B]/15 px-2.5 py-1 rounded-xl border border-[#F59E0B]/30">
+                  <View className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
+                  <Text className="text-[#F59E0B] text-[10px] font-extrabold tracking-widest">LIVE INVITE</Text>
                 </View>
-                <Text style={styles.liveInviteTitle}>
+                <Text className="text-[#F8FAFC] text-[20px] font-bold tracking-tighter">
                   {(guidedDates as { guided_dates: Category[] }).guided_dates
                     .flatMap((c) => c.activities)
                     .find((a) => a.id === incomingSession.template_id)?.title ?? 'Guided Date'}
                 </Text>
-                <Text style={styles.liveInviteDesc}>
+                <Text className="text-[#94A3B8] text-[14px] leading-5">
                   ⚡ Your partner started a date. Join them now!
                 </Text>
                 <TouchableOpacity
                   onPress={handleAcceptInvite}
-                  style={styles.acceptBtn}
                   activeOpacity={0.85}
+                  className="rounded-[18px] py-3.5 items-center overflow-hidden mt-1"
+                  style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 }}
                 >
                   <LinearGradient
                     colors={['#FBBF24', '#F59E0B']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFillObject}
+                    className="absolute top-0 bottom-0 left-0 right-0"
                   />
-                  <Text style={styles.acceptBtnText}>Accept &amp; Join ✦</Text>
+                  <Text className="text-[#0F172A] font-extrabold text-[15px] tracking-wider">Accept & Join ✦</Text>
                 </TouchableOpacity>
               </View>
             </BlurView>
           </Animated.View>
         )}
-      {filteredCategories.map((cat, ci) => (
-          <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
-            <View style={styles.catHeader}>
-              <Text style={styles.catTitle}>{cat.category}</Text>
-              <Text style={styles.catBasis}>{cat.scientific_basis}</Text>
+
+        {/* ── State A / B: The Daily Spark Matchmaker ── */}
+        {!isLibraryExpanded && (
+          <View>
+             {!suggestedDate ? (
+               <VibeCheck onComplete={handleVibeCheckComplete} />
+             ) : suggestedMatch ? (
+               <TodayMatchCard 
+                 activity={suggestedMatch.activity} 
+                 category={suggestedMatch.basis} 
+                 onStartPress={() => handleCardPress(suggestedMatch.activity, suggestedMatch.basis)} 
+                 onBrowseAllPress={() => {
+                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                   setIsLibraryExpanded(true);
+                 }} 
+               />
+             ) : null}
+          </View>
+        )}
+
+        {/* ── State C: The Library ── */}
+        {(isLibraryExpanded || (!suggestedDate && categories.length > 0)) && (
+          <View className={!isLibraryExpanded && !suggestedDate ? 'opacity-40 pointer-events-none' : ''}>
+             {isLibraryExpanded && suggestedDate && (
+                <Animated.View entering={FadeInDown.springify()} className="px-5 mb-6 flex-row items-center justify-between">
+                  <Text className="text-[#94A3B8] font-bold text-[14px] uppercase tracking-wider">All Experiences</Text>
+                  <TouchableOpacity onPress={() => setIsLibraryExpanded(false)}>
+                    <Text className="text-[#38BDF8] font-bold">Show Match</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+             )}
+            {categories.map((cat, ci) => (
+              <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
+            <View className="px-5 mb-4">
+              <Text className="text-[#F8FAFC] text-[18px] font-bold tracking-tighter">{cat.category}</Text>
+              <Text className="text-[#475569] text-[12px] mt-0.5 italic">{cat.scientific_basis}</Text>
             </View>
 
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.carouselContainer}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
               snapToInterval={176}
               decelerationRate="fast"
             >
@@ -258,8 +307,10 @@ export default function DatesScreen() {
             </ScrollView>
           </Animated.View>
         ))}
+          </View>
+        )}
 
-        <View style={{ height: 120 }} />
+        <View className="h-[120px]" />
       </ScrollView>
 
       {/* DateController modal */}
@@ -278,156 +329,4 @@ export default function DatesScreen() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 64 : 44,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 32,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    color: '#F8FAFC',
-    fontSize: 13,
-    marginTop: 4,
-    opacity: 0.45,
-  },
-  filterRow: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    gap: 8,
-    flexDirection: 'row',
-  },
-  filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  filterPillActive: {
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    borderColor: '#F59E0B',
-  },
-  filterText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  filterTextActive: {
-    color: '#F59E0B',
-  },
-  activityListMain: {
-    paddingBottom: 40,
-    gap: 32,
-  },
-  catHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  catTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  catBasis: {
-    color: '#475569',
-    fontSize: 12,
-    marginTop: 2,
-    fontStyle: 'italic',
-  },
-  carouselContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-
-  // ── Live Invitation Card ────────────────────────────────────────────────────
-  liveInviteWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  liveInviteCard: {
-    borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  liveInviteCardBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: 'rgba(245,158,11,0.45)',
-  },
-  liveInviteInner: {
-    padding: 22,
-    gap: 12,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
-  },
-  liveBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#F59E0B',
-  },
-  liveBadgeText: {
-    color: '#F59E0B',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  liveInviteTitle: {
-    color: '#F8FAFC',
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  liveInviteDesc: {
-    color: '#94A3B8',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  acceptBtn: {
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: 'center',
-    overflow: 'hidden',
-    marginTop: 4,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  acceptBtnText: {
-    color: '#0F172A',
-    fontWeight: '800',
-    fontSize: 15,
-    letterSpacing: 0.2,
-  },
-});

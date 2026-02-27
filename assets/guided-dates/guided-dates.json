@@ -8,30 +8,50 @@
                     "id": "cog_001",
                     "title": "The Unasked Night",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "ANY",
+                    "estimated_time": 20,
                     "desc": "Exchange 5 questions you've never asked each other to update your internal maps."
                 },
                 {
                     "id": "cog_002",
                     "title": "Values Alignment",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "ANY",
+                    "estimated_time": 30,
                     "desc": "If the world ended tomorrow, which 3 shared values would we carry with us?"
                 },
                 {
                     "id": "cog_003",
                     "title": "Childhood Museum",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 25,
                     "desc": "Look at childhood photos and explain what that child was feeling in that moment."
                 },
                 {
                     "id": "cog_004",
                     "title": "The Future Blueprint",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "ANY",
+                    "estimated_time": 20,
                     "desc": "Write a shared digital letter to your future selves 5 years from now and lock it."
                 },
                 {
                     "id": "cog_005",
                     "title": "Inner World Spy",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 15,
                     "desc": "Secretly learn the top 3 stressors your partner has this week and surprise them with a solution."
                 }
             ]
@@ -44,30 +64,50 @@
                     "id": "nov_001",
                     "title": "Adrenaline Route",
                     "mode": "ENVELOPE",
+                    "location": "OUTDOOR",
+                    "energy": "HIGH",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 60,
                     "desc": "Try something neither of you has ever done (climbing, dancing, exotic cuisine)."
                 },
                 {
                     "id": "nov_002",
                     "title": "Random Direction Walk",
                     "mode": "RESONANCE",
+                    "location": "OUTDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 30,
                     "desc": "Let the app decide every turn at intersections; get lost and explore together."
                 },
                 {
                     "id": "nov_003",
                     "title": "The 10 TL Challenge",
                     "mode": "ENVELOPE",
+                    "location": "OUTDOOR",
+                    "energy": "HIGH",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 20,
                     "desc": "Go to a market and find the object that will make your partner laugh the most within a tiny budget."
                 },
                 {
                     "id": "nov_004",
                     "title": "Mystery Adventure",
                     "mode": "ENVELOPE",
+                    "location": "OUTDOOR",
+                    "energy": "HIGH",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 45,
                     "desc": "Follow a coordinate given by the app and photograph the most interesting detail you find there."
                 },
                 {
                     "id": "nov_005",
                     "title": "Blind Drawing",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 15,
                     "desc": "Draw each other's portrait without looking at the paper and without lifting the pen."
                 }
             ]
@@ -80,30 +120,50 @@
                     "id": "bio_001",
                     "title": "The 20-Second Hug",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 1,
                     "desc": "Hold each other until both nervous systems regulate and relax (min 20 seconds)."
                 },
                 {
                     "id": "bio_002",
                     "title": "6-Second Kiss Ritual",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 1,
                     "desc": "A conscious connection longer than a peck to signal the brain to lower stress."
                 },
                 {
                     "id": "bio_003",
                     "title": "The Silent Connection",
                     "mode": "RESONANCE",
+                    "location": "OUTDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 15,
                     "desc": "Walk hand-in-hand for 15 mins in total silence, focusing only on ambient sounds and breathing."
                 },
                 {
                     "id": "bio_004",
                     "title": "Sensate Focus",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 30,
                     "desc": "Guided non-genital touch session focusing purely on sensory pleasure without pressure."
                 },
                 {
                     "id": "bio_005",
                     "title": "Aroma Therapy Meditation",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 10,
                     "desc": "Sit eye-to-eye for 10 mins accompanied by a single scent (lavender, sandalwood, etc.)."
                 }
             ]
@@ -116,30 +176,50 @@
                     "id": "phi_001",
                     "title": "Kintsugi Night",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 40,
                     "desc": "Discuss a past conflict and identify what you learned—turning the 'crack' into gold."
                 },
                 {
                     "id": "phi_002",
                     "title": "Omotenashi Challenge",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 15,
                     "desc": "Anticipate a need of your partner before they ask and fulfill it today."
                 },
                 {
                     "id": "phi_003",
                     "title": "Wabi-Sabi Walk",
                     "mode": "ENVELOPE",
+                    "location": "OUTDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 30,
                     "desc": "Find 'imperfectly beautiful' things in nature and tell your partner your favorite flaw of theirs."
                 },
                 {
                     "id": "phi_004",
                     "title": "The Gratitude Loop",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "ANY",
+                    "estimated_time": 10,
                     "desc": "Spend 10 mins saying only sentences that start with 'I am glad you are here because...'."
                 },
                 {
                     "id": "phi_005",
                     "title": "Midnight Picnic",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 45,
                     "desc": "Indoor picnic by candlelight, phones on airplane mode, pure focus on each other."
                 }
             ]
@@ -152,24 +232,40 @@
                     "id": "eft_001",
                     "title": "Safe Harbor Talk",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "ANY",
+                    "estimated_time": 30,
                     "desc": "Ask: 'What do I fear most when we fight?' Practice active listening to build safety."
                 },
                 {
                     "id": "eft_002",
                     "title": "Music of Our Souls",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "ANY",
+                    "estimated_time": 15,
                     "desc": "Play a song that represents a feeling you can't put into words and explain why."
                 },
                 {
                     "id": "eft_003",
                     "title": "Vulnerability Map",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 15,
                     "desc": "Show where you feel stress in your body; have your partner touch that area to soothe you."
                 },
                 {
                     "id": "eft_004",
                     "title": "Repair Attempt Workshop",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 25,
                     "desc": "Pick a small past tension and re-enact it using scientific repair phrases."
                 }
             ]
@@ -182,25 +278,41 @@
                     "id": "neu_001",
                     "title": "Mirroring Movement",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 5,
                     "desc": "Follow your partner's movements slowly like a mirror for 5 mins to sync brains."
                 },
                 {
                     "id": "neu_002",
                     "title": "The Breath Connection",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 10,
                     "desc": "Sit back-to-back and try to align your breathing rhythms for 10 mins."
                 },
                 {
                     "id": "neu_003",
                     "title": "Eye Contact Marathon",
                     "mode": "RESONANCE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 4,
                     "desc": "Silent eye contact for 4 mins to activate emotional synchrony."
                 },
                 {
                     "id": "neu_004",
                     "title": "Hug Until Relaxed",
                     "mode": "RESONANCE",
-                    "desc": "A second variation: Focus purely on the release of physical tension during the embrace."
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 10,
+                    "desc": "Focus purely on the release of physical tension during the embrace."
                 }
             ]
         },
@@ -212,18 +324,30 @@
                     "id": "shr_001",
                     "title": "Dream Architecture",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 40,
                     "desc": "Create a shared vision board for the top floor of your 'Relationship House'."
                 },
                 {
                     "id": "shr_002",
                     "title": "Kintsugi Coffee",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "ANY",
+                    "estimated_time": 20,
                     "desc": "Share how the relationship has made you a stronger individual over coffee."
                 },
                 {
                     "id": "shr_003",
                     "title": "The Check-in Ritual",
                     "mode": "DEEP_DIVE",
+                    "location": "INDOOR",
+                    "energy": "LOW",
+                    "connection_type": "ANY",
+                    "estimated_time": 15,
                     "desc": "Weekly 'Emotional Bank Account' meeting to track positive investments made."
                 }
             ]
@@ -236,18 +360,30 @@
                     "id": "act_001",
                     "title": "New Skill Date",
                     "mode": "ENVELOPE",
+                    "location": "INDOOR",
+                    "energy": "HIGH",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 30,
                     "desc": "Try learning a new skill together for 30 mins (origami, coding, a game)."
                 },
                 {
                     "id": "act_002",
                     "title": "Scent Memory Walk",
                     "mode": "RESONANCE",
+                    "location": "OUTDOOR",
+                    "energy": "MID",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 20,
                     "desc": "Find 3 scents outdoors that remind you of childhood or early dating days."
                 },
                 {
                     "id": "act_003",
                     "title": "Role Play Adventure",
                     "mode": "ENVELOPE",
+                    "location": "OUTDOOR",
+                    "energy": "HIGH",
+                    "connection_type": "TOGETHER",
+                    "estimated_time": 60,
                     "desc": "Meet at a cafe pretending to be strangers and 're-meet' for the first time."
                 }
             ]

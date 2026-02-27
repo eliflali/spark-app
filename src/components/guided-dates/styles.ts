@@ -23,12 +23,19 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'flex-start',
     },
-    modeIconCircle: {
-        width: 28,
-        height: 28,
-        borderRadius: 9,
+    modeBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        borderWidth: 0.5,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    modeBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
     },
     cardBottom: {
         gap: 10,

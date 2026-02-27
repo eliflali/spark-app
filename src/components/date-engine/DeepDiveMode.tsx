@@ -221,7 +221,7 @@ export default function DeepDiveMode({
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      className="flex-1 items-center"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={80}
     >
@@ -231,44 +231,44 @@ export default function DeepDiveMode({
       ))}
 
       {/* Science header */}
-      <View style={styles.header}>
-        <Text style={styles.sciLabel}>{scientificBasis}</Text>
-        <Text style={styles.activityTitle}>{activity.title}</Text>
-        <Text style={styles.activityDesc}>{activity.desc}</Text>
+      <View className="px-5 pb-2 pt-1 items-center gap-1.5">
+        <Text className="text-[#475569] text-[10px] font-semibold uppercase tracking-widest text-center">{scientificBasis}</Text>
+        <Text className="text-[#F8FAFC] text-[20px] font-bold tracking-tighter text-center">{activity.title}</Text>
+        <Text className="text-[#94A3B8] text-[13px] leading-5 text-center px-2">{activity.desc}</Text>
       </View>
 
       <ScrollView
         style={{ flex: 1, width: '100%' }}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingTop: 8, paddingHorizontal: 20, gap: 16, paddingBottom: 40 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         {/* ── Partner Box (top) ── */}
-        <View style={styles.answerBlock}>
-          <View style={styles.answerLabelRow}>
-            <View style={styles.avatarDot} />
-            <Text style={styles.answerName}>{partnerName}</Text>
+        <View className="gap-2.5">
+          <View className="flex-row items-center gap-2">
+            <View className="w-2 h-2 rounded-full bg-[#818CF8]" />
+            <Text className="text-[#818CF8] text-[12px] font-bold uppercase tracking-widest">{partnerName}</Text>
           </View>
 
-          <View style={styles.answerBox}>
+          <View className="bg-white/5 rounded-[20px] border border-white/10 min-h-[120px] overflow-hidden relative">
             {/* Always render partner content underneath */}
-            <Animated.View style={[styles.partnerContent, partnerRevealStyle]}>
-              <Text style={styles.answerText}>{partnerAnswer}</Text>
+            <Animated.View style={partnerRevealStyle} className="p-[18px]">
+              <Text className="text-[#E2EAF4] text-[15px] leading-6">{partnerAnswer}</Text>
             </Animated.View>
 
             {/* Blur overlay — lifts when user submits and partner is ready */}
             {(stage === 'input' || stage === 'waiting') && (
-              <BlurView tint="dark" intensity={20} style={StyleSheet.absoluteFillObject}>
-                <View style={styles.lockOverlay}>
+              <BlurView tint="dark" intensity={20} className="absolute top-0 bottom-0 left-0 right-0">
+                <View className="flex-1 items-center justify-center gap-2 min-h-[120px]">
                   {stage === 'waiting' ? (
                     <>
                       <Ionicons name="time-outline" size={24} color="#F59E0B" />
-                      <Text style={styles.lockText}>Waiting for partner...</Text>
+                      <Text className="text-[#94A3B8] text-[13px] font-semibold text-center">Waiting for partner...</Text>
                     </>
                   ) : (
                     <>
                       <Ionicons name="lock-closed" size={24} color="#F59E0B" />
-                      <Text style={styles.lockText}>Share your answer first</Text>
+                      <Text className="text-[#94A3B8] text-[13px] font-semibold text-center">Share your answer first</Text>
                     </>
                   )}
                 </View>
@@ -278,254 +278,75 @@ export default function DeepDiveMode({
         </View>
 
         {/* ── Divider ── */}
-        <View style={styles.dividerRow}>
-          <View style={styles.divider} />
-          <View style={styles.dividerIcon}>
-            <Text style={{ color: '#F59E0B', fontSize: 16 }}>✦</Text>
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 h-px bg-white/5" />
+          <View className="w-8 h-8 rounded-full bg-[#F59E0B]/10 border border-[#F59E0B]/20 items-center justify-center">
+            <Text className="text-[#F59E0B] text-[16px]">✦</Text>
           </View>
-          <View style={styles.divider} />
+          <View className="flex-1 h-px bg-white/5" />
         </View>
 
         {/* ── My Box (bottom) ── */}
-        <View style={styles.answerBlock}>
-          <View style={styles.answerLabelRow}>
-            <View style={[styles.avatarDot, { backgroundColor: '#F59E0B' }]} />
-            <Text style={[styles.answerName, { color: '#F59E0B' }]}>{myName} (You)</Text>
+        <View className="gap-2.5">
+          <View className="flex-row items-center gap-2">
+            <View className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+            <Text className="text-[#F59E0B] text-[12px] font-bold uppercase tracking-widest">{myName} (You)</Text>
           </View>
 
           {stage === 'input' ? (
-            <View style={[styles.answerBox, styles.inputBox]}>
+            <View className="bg-white/5 rounded-[20px] border border-white/10 min-h-[120px] overflow-hidden relative p-4 gap-3">
               <TextInput
                 value={myAnswer}
                 onChangeText={setMyAnswer}
                 placeholder="Write your answer here..."
                 placeholderTextColor="#334155"
                 multiline
-                style={styles.textInput}
+                className="text-[#F8FAFC] text-[15px] leading-[23px] min-h-[80px]"
+                style={{ textAlignVertical: 'top' }}
                 autoFocus={false}
               />
               <TouchableOpacity
-                style={[styles.submitBtn, !myAnswer.trim() && { opacity: 0.4 }]}
+                className={`bg-[#F59E0B] rounded-2xl py-3.5 items-center ${!myAnswer.trim() ? 'opacity-40' : ''}`}
+                style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
                 onPress={handleSubmit}
                 disabled={!myAnswer.trim()}
                 activeOpacity={0.85}
               >
-                <Text style={styles.submitBtnText}>Submit Answer ✦</Text>
+                <Text className="text-[#0F172A] font-bold text-[15px]">Submit Answer ✦</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <Animated.View entering={FadeIn.duration(400)} style={[styles.answerBox, styles.submittedBox, stage === 'waiting' && { opacity: 0.6 }]}>
-              <Text style={styles.answerText}>{myAnswer}</Text>
+            <Animated.View entering={FadeIn.duration(400)} className={`bg-white/5 rounded-[20px] border min-h-[120px] overflow-hidden relative p-[18px] border-[#F59E0B]/20 ${stage === 'waiting' ? 'opacity-60' : ''}`}>
+              <Text className="text-[#E2EAF4] text-[15px] leading-6">{myAnswer}</Text>
             </Animated.View>
           )}
         </View>
 
         {/* CTA after reveal */}
         {stage === 'revealed' && (
-          <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.ctaBox}>
-            <View style={styles.sparkBurstBadge}>
-              <Text style={styles.sparkBurstEmoji}>✦</Text>
-              <Text style={styles.sparkBurstText}>Connection deepened!</Text>
+          <Animated.View entering={FadeInDown.delay(600).springify()} className="items-center gap-4 mt-2">
+            <View className="flex-row items-center gap-2 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded-[20px] px-4 py-2">
+              <Text className="text-[#F59E0B] text-[16px]">✦</Text>
+              <Text className="text-[#F59E0B] font-bold text-[14px]">Connection deepened!</Text>
             </View>
             <TouchableOpacity
-              style={styles.continueBtn}
+              className="bg-[#F59E0B] rounded-[20px] py-4 px-10"
+              style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}
               activeOpacity={0.85}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onComplete();
               }}
             >
-              <Text style={styles.continueBtnText}>Complete Session →</Text>
+              <Text className="text-[#0F172A] font-bold text-[16px]">Complete Session →</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
 
-        <View style={{ height: 40 }} />
+        <View className="h-10" />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    alignItems: 'center',
-    gap: 6,
-    paddingTop: 4,
-  },
-  sciLabel: {
-    color: '#475569',
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    textAlign: 'center',
-  },
-  activityTitle: {
-    color: '#F8FAFC',
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  activityDesc: {
-    color: '#94A3B8',
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    gap: 16,
-  },
-  answerBlock: {
-    gap: 10,
-  },
-  answerLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#818CF8',
-  },
-  answerName: {
-    color: '#818CF8',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  answerBox: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    minHeight: 120,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  partnerContent: {
-    padding: 18,
-  },
-  inputBox: {
-    padding: 16,
-    gap: 12,
-  },
-  submittedBox: {
-    padding: 18,
-    borderColor: 'rgba(245,158,11,0.2)',
-  },
-  answerText: {
-    color: '#E2EAF4',
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  textInput: {
-    color: '#F8FAFC',
-    fontSize: 15,
-    lineHeight: 23,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  submitBtn: {
-    backgroundColor: '#F59E0B',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  submitBtnText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  lockOverlay: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 120,
-  },
-  lockText: {
-    color: '#94A3B8',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-  },
-  dividerIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(245,158,11,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ctaBox: {
-    alignItems: 'center',
-    gap: 16,
-    marginTop: 8,
-  },
-  sparkBurstBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  sparkBurstEmoji: {
-    color: '#F59E0B',
-    fontSize: 16,
-  },
-  sparkBurstText: {
-    color: '#F59E0B',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  continueBtn: {
-    backgroundColor: '#F59E0B',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 40,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  continueBtnText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-});
+

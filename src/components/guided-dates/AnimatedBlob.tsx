@@ -54,14 +54,13 @@ export function AnimatedBlob({ config }: { config: BlobConfig }) {
   return (
     <Animated.View
       pointerEvents="none"
+      className="absolute opacity-[0.55]"
       style={[
         {
-          position: 'absolute',
           width: config.size,
           height: config.size,
           borderRadius: config.size / 2,
           backgroundColor: config.color,
-          opacity: 0.55,
         },
         style,
       ]}

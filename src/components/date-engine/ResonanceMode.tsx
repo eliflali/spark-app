@@ -137,57 +137,57 @@ export default function ResonanceMode({ activity, scientificBasis, onComplete }:
   const ss = String(secondsLeft % 60).padStart(2, '0');
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 items-center justify-center px-8 gap-6">
       {/* Background glow on complete */}
-      <Animated.View style={[styles.goldGlowBg, glowAnimStyle]} pointerEvents="none" />
+      <Animated.View className="absolute top-0 bottom-0 left-0 right-0 bg-[rgba(245,158,11,0.07)] rounded-none" style={[glowAnimStyle]} pointerEvents="none" />
 
       {/* Scientific basis */}
-      <Text style={styles.sciLabel}>{scientificBasis}</Text>
+      <Text className="text-[#475569] text-[11px] font-semibold uppercase tracking-[1.5px] text-center">{scientificBasis}</Text>
 
       {/* Phase label */}
       {!done && (
-        <Text style={styles.phaseLabel}>
+        <Text className="text-[#F59E0B] text-[16px] font-bold tracking-[0.3px]">
           {phase === 'inhale' ? '🌬  Breathe In' : '💨  Breathe Out'}
         </Text>
       )}
 
       {/* Ring + Logo */}
-      <View style={styles.ringWrapper}>
+      <View className="items-center justify-center relative" style={{ width: RING_SIZE, height: RING_SIZE }}>
         {/* Background track ring */}
-        <View style={[styles.ring, styles.ringTrack]} />
+        <View className="absolute rounded-full border-4 overflow-hidden border-[#F59E0B]/15 bg-transparent" style={{ width: RING_SIZE, height: RING_SIZE }} />
 
         {/* Progress ring segments — approximate with gradient arc */}
-        <Animated.View style={[styles.ring, styles.ringProgress, ringAnimStyle]}>
+        <Animated.View className="absolute rounded-full border-4 overflow-hidden border-transparent opacity-60" style={[{ width: RING_SIZE, height: RING_SIZE }, ringAnimStyle]}>
           <LinearGradient
             colors={['#F59E0B', '#FBBF24', '#FDE68A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            className="absolute top-0 bottom-0 left-0 right-0"
           />
         </Animated.View>
 
         {/* Liquid Logo */}
-        <View style={styles.logoOuter}>
-          <Animated.View style={[styles.logoInner, logoAnimStyle]}>
+        <View className="bg-[#0F172A]/95 items-center justify-center border-[1.5px] border-[#F59E0B]/30 overflow-hidden" style={{ width: LOGO_BASE, height: LOGO_BASE, borderRadius: LOGO_BASE / 2, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10 }}>
+          <Animated.View className="w-full h-full items-center justify-center overflow-hidden" style={[{ borderRadius: LOGO_BASE / 2 }, logoAnimStyle]}>
             <LinearGradient
               colors={['rgba(245,158,11,0.25)', 'rgba(245,158,11,0.08)']}
-              style={StyleSheet.absoluteFillObject}
+              className="absolute top-0 bottom-0 left-0 right-0"
             />
             {/* Spark Symbol */}
-            <Text style={styles.logoEmoji}>✦</Text>
+            <Text className="text-[#F59E0B]" style={{ fontSize: LOGO_BASE * 0.35 }}>✦</Text>
           </Animated.View>
         </View>
       </View>
 
       {/* Timer */}
       {!done ? (
-        <Text style={styles.timer}>{mm}:{ss}</Text>
+        <Text className="text-[#F8FAFC] text-[48px] font-light tracking-[2px] tabular-nums">{mm}:{ss}</Text>
       ) : (
-        <Animated.View style={styles.completedBox}>
-          <Text style={styles.completedTitle}>✦ Connection Established</Text>
-          <Text style={styles.completedSub}>Your nervous systems are in sync.</Text>
+        <Animated.View className="items-center gap-3">
+          <Text className="text-[#F59E0B] text-[24px] font-bold tracking-tighter text-center">✦ Connection Established</Text>
+          <Text className="text-[#94A3B8] text-[15px] leading-[22px] text-center">Your nervous systems are in sync.</Text>
           <Text
-            style={styles.completedBtn}
+            className="mt-3 text-[#0F172A] bg-[#F59E0B] px-8 py-3.5 rounded-[20px] text-[16px] font-bold overflow-hidden"
             onPress={onComplete}
           >
             Continue →
@@ -197,130 +197,10 @@ export default function ResonanceMode({ activity, scientificBasis, onComplete }:
 
       {/* Description */}
       {!done && (
-        <Text style={styles.desc}>{activity.desc}</Text>
+        <Text className="text-[#94A3B8] text-[14px] leading-[22px] text-center">{activity.desc}</Text>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    gap: 24,
-  },
-  goldGlowBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(245,158,11,0.07)',
-    borderRadius: 0,
-  },
-  sciLabel: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    textAlign: 'center',
-  },
-  phaseLabel: {
-    color: '#F59E0B',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  ringWrapper: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  ring: {
-    position: 'absolute',
-    width: RING_SIZE,
-    height: RING_SIZE,
-    borderRadius: RING_SIZE / 2,
-    borderWidth: 4,
-    overflow: 'hidden',
-  },
-  ringTrack: {
-    borderColor: 'rgba(245,158,11,0.15)',
-    backgroundColor: 'transparent',
-  },
-  ringProgress: {
-    borderColor: 'transparent',
-    // Gradient fills just the top-right quadrant — decorative approach
-    opacity: 0.6,
-  },
-  logoOuter: {
-    width: LOGO_BASE,
-    height: LOGO_BASE,
-    borderRadius: LOGO_BASE / 2,
-    backgroundColor: 'rgba(15,23,42,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(245,158,11,0.3)',
-    overflow: 'hidden',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logoInner: {
-    width: '100%',
-    height: '100%',
-    borderRadius: LOGO_BASE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  logoEmoji: {
-    fontSize: LOGO_BASE * 0.35,
-    color: '#F59E0B',
-  },
-  timer: {
-    color: '#F8FAFC',
-    fontSize: 48,
-    fontWeight: '300',
-    letterSpacing: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  desc: {
-    color: '#94A3B8',
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  completedBox: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  completedTitle: {
-    color: '#F59E0B',
-    fontSize: 24,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    textAlign: 'center',
-  },
-  completedSub: {
-    color: '#94A3B8',
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  completedBtn: {
-    marginTop: 12,
-    color: '#0F172A',
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 20,
-    fontSize: 16,
-    fontWeight: '700',
-    overflow: 'hidden',
-  },
-});
+

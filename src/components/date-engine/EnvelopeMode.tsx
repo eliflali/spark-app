@@ -95,10 +95,10 @@ export default function EnvelopeMode({ activity, scientificBasis, onComplete }: 
   }));
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 items-center justify-center px-6 gap-7">
       {/* Label */}
-      <Text style={styles.sciLabel}>{scientificBasis}</Text>
-      <Text style={styles.hint}>
+      <Text className="text-[#475569] text-[11px] font-semibold uppercase tracking-[1.5px] text-center">{scientificBasis}</Text>
+      <Text className="text-[#94A3B8] text-[14px] text-center min-h-[20px]">
         {stage === 'sealed' ? 'Swipe up or tap to open your envelope' : ''}
       </Text>
 
@@ -106,68 +106,69 @@ export default function EnvelopeMode({ activity, scientificBasis, onComplete }: 
       <TouchableOpacity
         activeOpacity={0.95}
         onPress={handleTear}
-        style={styles.envelopeWrapper}
+        className="items-center justify-end"
+        style={{ width: ENVELOPE_W, height: ENVELOPE_H + 80 }}
         {...panResponder.panHandlers}
       >
         {/* Envelope back */}
-        <View style={styles.envelope}>
-          <BlurView tint="dark" intensity={40} style={StyleSheet.absoluteFillObject} />
+        <View className="rounded-[20px] overflow-hidden border border-[#F59E0B]/25 bg-[#0F172A]/90 items-center justify-center relative" style={{ width: ENVELOPE_W, height: ENVELOPE_H, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 12 }}>
+          <BlurView tint="dark" intensity={40} className="absolute top-0 bottom-0 left-0 right-0" />
           <LinearGradient
             colors={['rgba(245,158,11,0.12)', 'rgba(15,23,42,0.8)', 'rgba(245,158,11,0.06)']}
-            style={StyleSheet.absoluteFillObject}
+            className="absolute top-0 bottom-0 left-0 right-0"
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
           />
 
           {/* Bottom triangle fold */}
-          <View style={styles.envelopeBottomFold} />
+          <View className="absolute bottom-0 left-0 right-0 border-t border-[#F59E0B]/12 bg-[#F59E0B]/5" style={{ height: ENVELOPE_H * 0.4 }} />
 
           {/* Wax seal */}
           {stage === 'sealed' && (
-            <View style={styles.seal}>
+            <View className="w-14 h-14 rounded-full items-center justify-center overflow-hidden z-10" style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 }}>
               <LinearGradient
                 colors={['#FBBF24', '#F59E0B', '#D97706']}
-                style={StyleSheet.absoluteFillObject}
+                className="absolute top-0 bottom-0 left-0 right-0"
               />
-              <Text style={styles.sealText}>✦</Text>
+              <Text className="text-[#0F172A] text-[22px] font-bold">✦</Text>
             </View>
           )}
 
           {/* Revealed Spark Card inside */}
           {(stage === 'revealed' || stage === 'done') && (
-            <Animated.View style={[styles.sparkCard, cardAnimStyle]}>
+            <Animated.View style={[cardAnimStyle, { width: ENVELOPE_W - 32 }]} className="bg-[#0F172A]/95 rounded-2xl p-5 border border-[#F59E0B]/20 gap-3 overflow-hidden">
               <LinearGradient
                 colors={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.02)']}
-                style={StyleSheet.absoluteFillObject}
+                className="absolute top-0 bottom-0 left-0 right-0"
               />
-              <View style={styles.cardHeader}>
-                <View style={styles.cardBadge}>
-                  <Text style={styles.cardBadgeText}>SPARK DATE</Text>
+              <View className="flex-row items-center">
+                <View className="px-2 py-[3px] rounded-lg bg-[#F59E0B]/15">
+                  <Text className="text-[#F59E0B] text-[9px] font-bold tracking-[1.5px]">SPARK DATE</Text>
                 </View>
               </View>
 
-              <Text style={styles.cardTitle}>{activity.title}</Text>
-              <Text style={styles.cardDesc}>{activity.desc}</Text>
+              <Text className="text-[#F8FAFC] text-[20px] font-bold tracking-tighter leading-[26px]">{activity.title}</Text>
+              <Text className="text-[#94A3B8] text-[14px] leading-[22px]">{activity.desc}</Text>
 
-              <View style={styles.cardDivider} />
-              <View style={styles.cardFooter}>
+              <View className="h-px bg-white/5" />
+              <View className="flex-row items-center gap-1.5">
                 <Ionicons name="flask-outline" size={13} color="#F59E0B" />
-                <Text style={styles.cardScience}>{scientificBasis}</Text>
+                <Text className="text-[#475569] text-[11px] font-semibold italic flex-1">{scientificBasis}</Text>
               </View>
             </Animated.View>
           )}
 
           {/* Flap — animated tear away */}
           {stage !== 'done' && (
-            <Animated.View style={[styles.envelopeFlap, flapAnimStyle]}>
+            <Animated.View style={[flapAnimStyle, { height: ENVELOPE_H * 0.5 }]} className="absolute top-0 left-0 right-0 bg-[#1E293B]/95 rounded-t-[20px] overflow-hidden border-b-[1.5px] border-[#F59E0B]/20">
               <LinearGradient
                 colors={['rgba(245,158,11,0.18)', 'rgba(30,41,59,0.95)']}
-                style={StyleSheet.absoluteFillObject}
+                className="absolute top-0 bottom-0 left-0 right-0"
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
               />
               {/* Diagonal cut lines for texture */}
-              <View style={styles.flapTearLine} />
+              <View className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#F59E0B]/30" />
             </Animated.View>
           )}
         </View>
@@ -175,9 +176,10 @@ export default function EnvelopeMode({ activity, scientificBasis, onComplete }: 
 
       {/* CTA after reveal */}
       {stage === 'revealed' && (
-        <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.ctaRow}>
+        <Animated.View entering={FadeInDown.delay(500).springify()} className="w-full gap-3 items-center">
           <TouchableOpacity
-            style={styles.photoBtn}
+            className="flex-row items-center gap-2.5 bg-[#F59E0B] rounded-[20px] py-4 px-7 w-full justify-center"
+            style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}
             activeOpacity={0.85}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -186,18 +188,18 @@ export default function EnvelopeMode({ activity, scientificBasis, onComplete }: 
             }}
           >
             <Ionicons name="camera-outline" size={18} color="#0F172A" />
-            <Text style={styles.photoBtnText}>Take a Photo for Widget</Text>
+            <Text className="text-[#0F172A] font-bold text-[15px]">Take a Photo for Widget</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.skipBtn}
+            className="py-2"
             activeOpacity={0.7}
             onPress={() => {
               setStage('done');
               onComplete();
             }}
           >
-            <Text style={styles.skipBtnText}>Skip photo →</Text>
+            <Text className="text-[#475569] text-[14px] font-semibold">Skip photo →</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -208,187 +210,4 @@ export default function EnvelopeMode({ activity, scientificBasis, onComplete }: 
 const ENVELOPE_W = width - 48;
 const ENVELOPE_H = ENVELOPE_W * 0.72;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 28,
-  },
-  sciLabel: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    textAlign: 'center',
-  },
-  hint: {
-    color: '#94A3B8',
-    fontSize: 14,
-    textAlign: 'center',
-    minHeight: 20,
-  },
-  envelopeWrapper: {
-    width: ENVELOPE_W,
-    height: ENVELOPE_H + 80,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  envelope: {
-    width: ENVELOPE_W,
-    height: ENVELOPE_H,
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.25)',
-    backgroundColor: 'rgba(15,23,42,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 24,
-    elevation: 12,
-  },
-  envelopeBottomFold: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: ENVELOPE_H * 0.4,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(245,158,11,0.12)',
-    backgroundColor: 'rgba(245,158,11,0.04)',
-  },
-  envelopeFlap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: ENVELOPE_H * 0.5,
-    backgroundColor: 'rgba(30,41,59,0.95)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(245,158,11,0.2)',
-  },
-  flapTearLine: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: 'rgba(245,158,11,0.3)',
-  },
-  seal: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    zIndex: 10,
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  sealText: {
-    color: '#0F172A',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  sparkCard: {
-    width: ENVELOPE_W - 32,
-    backgroundColor: 'rgba(15,23,42,0.96)',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.2)',
-    gap: 12,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245,158,11,0.15)',
-  },
-  cardBadgeText: {
-    color: '#F59E0B',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  cardTitle: {
-    color: '#F8FAFC',
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    lineHeight: 26,
-  },
-  cardDesc: {
-    color: '#94A3B8',
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  cardScience: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '600',
-    fontStyle: 'italic',
-    flex: 1,
-  },
-  ctaRow: {
-    width: '100%',
-    gap: 12,
-    alignItems: 'center',
-  },
-  photoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#F59E0B',
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    width: '100%',
-    justifyContent: 'center',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  photoBtnText: {
-    color: '#0F172A',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  skipBtn: {
-    paddingVertical: 8,
-  },
-  skipBtnText: {
-    color: '#475569',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});
+

@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
   Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -91,29 +90,29 @@ const MOCK_MEMORIES: Memory[] = [
 function MemoryCard({ memory, index }: { memory: Memory; index: number }) {
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
-      <TouchableOpacity style={styles.card} activeOpacity={0.85}>
+      <TouchableOpacity className="flex-row bg-white/5 rounded-[20px] border border-white/5 overflow-hidden" activeOpacity={0.85}>
         {/* Left accent bar */}
-        <View style={[styles.cardAccent, { backgroundColor: memory.color }]} />
+        <View className="w-[3px] rounded-tl-[20px] rounded-bl-[20px]" style={{ backgroundColor: memory.color }} />
 
-        <View style={styles.cardInner}>
+        <View className="flex-1 p-4 gap-2.5">
           {/* Emoji + Date row */}
-          <View style={styles.cardTopRow}>
-            <View style={[styles.emojiCircle, { backgroundColor: memory.color + '20' }]}>
+          <View className="flex-row items-center gap-3">
+            <View className="w-11 h-11 rounded-[13px] items-center justify-center shrink-0" style={{ backgroundColor: memory.color + '20' }}>
               <Text style={{ fontSize: 20 }}>{memory.emoji}</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardDate}>{memory.date}</Text>
-              <Text style={styles.cardTitle}>{memory.title}</Text>
+            <View className="flex-1">
+              <Text className="text-[#475569] text-[11px] font-semibold uppercase tracking-wide mb-0.5">{memory.date}</Text>
+              <Text className="text-[#F8FAFC] text-[15px] font-bold tracking-tight">{memory.title}</Text>
             </View>
-            <View style={[styles.typePill, { backgroundColor: memory.color + '18', borderColor: memory.color + '44' }]}>
-              <Text style={[styles.typeText, { color: memory.color }]}>
+            <View className="px-2.5 py-1 rounded-[10px] border shrink-0" style={{ backgroundColor: memory.color + '18', borderColor: memory.color + '44' }}>
+              <Text className="text-[10px] font-bold" style={{ color: memory.color }}>
                 {memory.type === 'spark' ? '✦ Spark' : memory.type === 'date' ? '📅 Date' : '📸 Photo'}
               </Text>
             </View>
           </View>
 
           {/* Preview */}
-          <Text style={styles.cardPreview} numberOfLines={2}>{memory.preview}</Text>
+          <Text className="text-[#64748B] text-[13px] leading-5" numberOfLines={2}>{memory.preview}</Text>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -124,25 +123,25 @@ function MemoryCard({ memory, index }: { memory: Memory; index: number }) {
 
 function FlameStats() {
   return (
-    <BlurView tint="dark" intensity={40} style={styles.statsCard}>
+    <BlurView tint="dark" intensity={40} className="rounded-[24px] overflow-hidden border border-[#F59E0B]/15">
       <LinearGradient
         colors={['rgba(245,158,11,0.06)', 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        className="absolute top-0 bottom-0 left-0 right-0"
       />
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>6</Text>
-          <Text style={styles.statLabel}>Sparks</Text>
+      <View className="flex-row py-5 px-2 bg-white/5">
+        <View className="flex-1 items-center gap-1">
+          <Text className="text-[#F8FAFC] text-[22px] font-bold tracking-tight">6</Text>
+          <Text className="text-[#475569] text-[12px] font-semibold">Sparks</Text>
         </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>2</Text>
-          <Text style={styles.statLabel}>Dates</Text>
+        <View className="w-[1px] bg-white/5 my-1" />
+        <View className="flex-1 items-center gap-1">
+          <Text className="text-[#F8FAFC] text-[22px] font-bold tracking-tight">2</Text>
+          <Text className="text-[#475569] text-[12px] font-semibold">Dates</Text>
         </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statValue}>🔥 7</Text>
-          <Text style={styles.statLabel}>Day Streak</Text>
+        <View className="w-[1px] bg-white/5 my-1" />
+        <View className="flex-1 items-center gap-1">
+          <Text className="text-[#F8FAFC] text-[22px] font-bold tracking-tight">🔥 7</Text>
+          <Text className="text-[#475569] text-[12px] font-semibold">Day Streak</Text>
         </View>
       </View>
     </BlurView>
@@ -165,17 +164,17 @@ export default function MemoriesScreen() {
     filter === 'all' ? MOCK_MEMORIES : MOCK_MEMORIES.filter((m) => m.type === filter);
 
   return (
-    <View style={styles.root}>
+    <View className="flex-1 bg-[#0F172A]">
       <StatusBar style="light" />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ paddingTop: Platform.OS === 'ios' ? 64 : 44, paddingHorizontal: 20, gap: 16 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.header}>
-          <Text style={styles.headerTitle}>Our Flame</Text>
-          <Text style={styles.headerSub}>Your shared journey together</Text>
+        <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-1">
+          <Text className="text-[#F8FAFC] text-[30px] font-bold tracking-tighter">Our Flame</Text>
+          <Text className="text-[#475569] text-[14px] mt-0.5">Your shared journey together</Text>
         </Animated.View>
 
         {/* Stats */}
@@ -188,16 +187,16 @@ export default function MemoriesScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
+            contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
           >
             {filters.map((f) => (
               <TouchableOpacity
                 key={f.key}
                 onPress={() => setFilter(f.key)}
-                style={[styles.filterPill, filter === f.key && styles.filterPillActive]}
+                className={`px-3.5 py-[7px] rounded-full border ${filter === f.key ? 'bg-[#F59E0B]/15 border-[#F59E0B]' : 'bg-white/5 border-white/5'}`}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.filterText, filter === f.key && styles.filterTextActive]}>
+                <Text className={`text-[13px] font-semibold ${filter === f.key ? 'text-[#F59E0B]' : 'text-[#64748B]'}`}>
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -206,12 +205,12 @@ export default function MemoriesScreen() {
         </Animated.View>
 
         {/* Section title */}
-        <Text style={styles.sectionTitle}>
+        <Text className="text-[#64748B] text-[13px] font-semibold uppercase tracking-wide">
           {filtered.length} {filter === 'all' ? 'memories' : filter + 's'} together
         </Text>
 
         {/* Memory cards */}
-        <View style={styles.cardList}>
+        <View className="gap-2.5">
           {filtered.map((memory, index) => (
             <MemoryCard key={memory.id} memory={memory} index={index} />
           ))}
@@ -219,187 +218,17 @@ export default function MemoriesScreen() {
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <View style={styles.emptyState}>
+          <View className="items-center pt-[60px]">
             <Text style={{ fontSize: 48, marginBottom: 12 }}>🌱</Text>
-            <Text style={styles.emptyTitle}>No memories yet</Text>
-            <Text style={styles.emptySub}>Complete sparks and dates to build your flame.</Text>
+            <Text className="text-[#E2EAF4] text-[18px] font-bold mb-1.5">No memories yet</Text>
+            <Text className="text-[#475569] text-[14px] text-center leading-[21px]">Complete sparks and dates to build your flame.</Text>
           </View>
         )}
 
-        <View style={{ height: 120 }} />
+        <View className="h-[120px]" />
       </ScrollView>
     </View>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-  },
-  content: {
-    paddingTop: Platform.OS === 'ios' ? 64 : 44,
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  header: {
-    marginBottom: 4,
-  },
-  headerTitle: {
-    color: '#F8FAFC',
-    fontSize: 30,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    color: '#475569',
-    fontSize: 14,
-    marginTop: 2,
-  },
-  statsCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.15)',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    paddingVertical: 20,
-    paddingHorizontal: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  statValue: {
-    color: '#F8FAFC',
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    color: '#475569',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    marginVertical: 4,
-  },
-  filterRow: {
-    gap: 8,
-    paddingVertical: 4,
-  },
-  filterPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  filterPillActive: {
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    borderColor: '#F59E0B',
-  },
-  filterText: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  filterTextActive: {
-    color: '#F59E0B',
-  },
-  sectionTitle: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  cardList: {
-    gap: 10,
-  },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-    overflow: 'hidden',
-  },
-  cardAccent: {
-    width: 3,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
-  },
-  cardInner: {
-    flex: 1,
-    padding: 16,
-    gap: 10,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  emojiCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  cardDate: {
-    color: '#475569',
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  cardTitle: {
-    color: '#F8FAFC',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  typePill: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 10,
-    borderWidth: 1,
-    flexShrink: 0,
-  },
-  typeText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  cardPreview: {
-    color: '#64748B',
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyTitle: {
-    color: '#E2EAF4',
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  emptySub: {
-    color: '#475569',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 21,
-  },
-});
