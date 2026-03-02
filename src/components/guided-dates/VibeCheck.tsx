@@ -154,7 +154,7 @@ export function VibeCheck({ onComplete }: Props) {
               <TouchableOpacity
                 onPress={handleStart}
                 activeOpacity={0.8}
-                className="rounded-full overflow-hidden mt-2 self-start"
+                className="rounded-full overflow-hidden mt-2 self-center"
                 style={{
                   borderWidth: StyleSheet.hairlineWidth,
                   borderColor: 'rgba(255, 255, 255, 0.2)',

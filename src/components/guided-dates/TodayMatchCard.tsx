@@ -4,13 +4,11 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Activity } from '@/src/components/date-engine/DateController';
-import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   activity: Activity;
   category: string;
   onStartPress: () => void;
-  onBrowseAllPress: () => void;
 }
 
 // Function to map mode to colors
@@ -41,7 +39,7 @@ const getTextColorForMode = (mode: string) => {
   }
 };
 
-export function TodayMatchCard({ activity, category, onStartPress, onBrowseAllPress }: Props) {
+export function TodayMatchCard({ activity, category, onStartPress }: Props) {
   const bgGradients = getGradientsForMode(activity.mode);
   const btnGradient = getButtonColorsForMode(activity.mode);
   const textColor = getTextColorForMode(activity.mode);
@@ -114,17 +112,6 @@ export function TodayMatchCard({ activity, category, onStartPress, onBrowseAllPr
                 </View>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity
-              onPress={onBrowseAllPress}
-              activeOpacity={0.7}
-              className="py-2 items-end px-2"
-            >
-              <View className="flex-row items-center gap-1">
-                <Text className="text-white/80 font-bold text-[12px] tracking-wide">Browse Library</Text>
-                <Ionicons name="arrow-forward" size={15} color="white" />
-              </View>
-            </TouchableOpacity>
           </Animated.View>
         </View>
       </BlurView>

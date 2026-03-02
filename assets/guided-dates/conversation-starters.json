@@ -1,0 +1,77 @@
+{
+    "conversation_decks": [
+        {
+            "deck_id": "deck_001",
+            "title": "The Icebreaker",
+            "vibe": "Curious & Light",
+            "level": 1,
+            "tag": "First Contact",
+            "scientific_basis": "Arthur Aron Set 1",
+            "questions": [
+                "Given the choice of anyone in the world, whom would you want as a dinner guest?",
+                "Would you like to be famous? In what way?",
+                "Before making a phone call, do you ever rehearse what you’re going to say? Why?",
+                "What would constitute a perfect day for you?",
+                "When did you last sing to yourself? To someone else?",
+                "If you were able to live to the age of 90 and retain either the mind or body of a 30-year-old for the last 60 years of your life, which would you choose?",
+                "Name three things you and your partner appear to have in common.",
+                "For what in your life do you feel most grateful?",
+                "If you could change anything about the way you were raised, what would it be?"
+            ]
+        },
+        {
+            "deck_id": "deck_002",
+            "title": "Inner Reflections",
+            "vibe": "Meaningful",
+            "level": 2,
+            "tag": "Values & Stories",
+            "scientific_basis": "Arthur Aron Set 2 - Part A",
+            "questions": [
+                "Take four minutes and tell your partner your life story in as much detail as possible.",
+                "If you could wake up tomorrow having gained one quality or ability, what would it be?",
+                "If a crystal ball could tell you the truth about yourself, your life, the future, or anything else, what would you want to know?",
+                "Is there something that you’ve dreamed of doing for a long time? Why haven’t you done it?",
+                "What is the greatest accomplishment of your life?",
+                "What do you value most in a friendship?"
+            ]
+        },
+        {
+            "deck_id": "deck_003",
+            "title": "The Vulnerability Lab",
+            "vibe": "Intimate",
+            "level": 2,
+            "tag": "Emotional Safety",
+            "scientific_basis": "Arthur Aron Set 2 - Part B",
+            "questions": [
+                "What is your most treasured memory?",
+                "What is your most terrible memory?",
+                "If you knew that in one year you would die suddenly, would you change anything about the way you are living now? Why?",
+                "What does friendship mean to you?",
+                "What roles do love and affection play in your life?",
+                "Alternate sharing something you consider a positive characteristic of your partner. Share a total of five items.",
+                "Do you feel your childhood was happy? Why?"
+            ]
+        },
+        {
+            "deck_id": "deck_004",
+            "title": "Soul Connection",
+            "vibe": "Soulful",
+            "level": 3,
+            "tag": "Total Oneness",
+            "scientific_basis": "Arthur Aron Set 3",
+            "questions": [
+                "Make three true 'we' statements each. For instance, 'We are both in this room feeling...'",
+                "Complete this sentence: 'I wish I had someone with whom I could share...'",
+                "If you were going to become a close friend with your partner, please share what would be important for them to know.",
+                "Tell your partner what you like about them: Be honest this time, saying things that you might not say to someone you’ve just met.",
+                "Share with your partner an embarrassing moment in your life.",
+                "When did you last cry in front of another person? By yourself?",
+                "Tell your partner something that you like about them already.",
+                "What, if anything, is too serious to be joked about?",
+                "Your house catches fire. After saving your loved ones and pets, you have time to save any one item. What would it be? Why?",
+                "If you were to die this evening, what would you most regret not having told someone? Why haven’t you told them yet?",
+                "Share a personal problem and ask your partner’s advice. Also, ask your partner to reflect back to you how you seem to be feeling about it."
+            ]
+        }
+    ]
+}

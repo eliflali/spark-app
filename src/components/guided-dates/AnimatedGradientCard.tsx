@@ -54,7 +54,7 @@ export function AnimatedGradientCard({
   ];
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.82} className="w-[140px] h-[150px] rounded-[24px] border-[0.5px] border-white/20 overflow-hidden">
+    <TouchableOpacity onPress={onPress} activeOpacity={0.82} className="w-[130px] h-[140px] rounded-[24px] border-[0.5px] border-white/20 overflow-hidden">
       {/* Dark base */}
       <View className="absolute top-0 bottom-0 left-0 right-0 bg-[#0F172A] rounded-[24px]" />
 

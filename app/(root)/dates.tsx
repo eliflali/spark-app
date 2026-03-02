@@ -24,6 +24,7 @@ import * as Haptics from 'expo-haptics';
 
 // Data
 import guidedDates from '@/assets/guided-dates/guided-dates.json';
+import conversationStarters from '@/assets/guided-dates/conversation-starters.json';
 
 // Supabase + auth
 import { supabase } from '@/src/lib/supabase';
@@ -43,6 +44,10 @@ import { useActiveSession } from '@/src/hooks/useActiveSession';
 import { useSuggestedDate } from '@/src/hooks/useSuggestedDate';
 import { VibeCheck, type VibeData } from '@/src/components/guided-dates/VibeCheck';
 import { TodayMatchCard } from '@/src/components/guided-dates/TodayMatchCard';
+
+// Conversation Decks
+import { ConversationDeckCard, type DeckData } from '@/src/components/guided-dates/ConversationDeckCard';
+import { ConversationDeckController } from '@/src/components/guided-dates/ConversationDeckController';
 
 
 
@@ -64,6 +69,7 @@ export default function DatesScreen() {
   const categories = (guidedDates as { guided_dates: Category[] }).guided_dates;
 
   const [isLibraryExpanded, setIsLibraryExpanded] = useState(false);
+  const [selectedDeck, setSelectedDeck] = useState<DeckData | null>(null);
 
   // ── Real-time hooks ────────────────────────────────────────────────────────
   const { incomingSession, acceptSession, cancelSession, startSession } = useActiveSession();
@@ -270,34 +276,57 @@ export default function DatesScreen() {
         {!isLibraryExpanded && (
           <View>
              {!suggestedDate ? (
-               <View>
-                 <VibeCheck onComplete={handleVibeCheckComplete} />
-                 <Animated.View entering={FadeInDown.delay(500).springify()} className="px-5 items-center mt-2">
-                   <TouchableOpacity
-                     onPress={() => {
-                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                       setIsLibraryExpanded(true);
-                     }}
-                     activeOpacity={0.7}
-                     className="py-3 px-6 rounded-full bg-white/5 border border-white/10 flex-row items-center gap-2"
-                   >
-                     <Text className="text-white/80 font-bold text-[14px] tracking-wide">Browse Library</Text>
-                     <Ionicons name="arrow-forward" size={16} color="white" />
-                   </TouchableOpacity>
-                 </Animated.View>
-               </View>
+               <VibeCheck onComplete={handleVibeCheckComplete} />
              ) : suggestedMatch ? (
                <TodayMatchCard 
                  activity={suggestedMatch.activity} 
                  category={suggestedMatch.basis} 
                  onStartPress={() => handleCardPress(suggestedMatch.activity, suggestedMatch.basis)} 
-                 onBrowseAllPress={() => {
-                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                   setIsLibraryExpanded(true);
-                 }} 
                />
              ) : null}
+
+             <Animated.View entering={FadeInDown.delay(500).springify()} className="px-5 items-center mt-2">
+               <TouchableOpacity
+                 onPress={() => {
+                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                   setIsLibraryExpanded(true);
+                 }}
+                 activeOpacity={0.7}
+                 className="py-3 px-6 flex-row items-center gap-2"
+               >
+                 <Text className="text-white/80 text-[14px] tracking-wide">Browse Date Library</Text>
+               </TouchableOpacity>
+             </Animated.View>
           </View>
+        )}
+
+        {/* ── Conversation Decks ── */}
+        {!isLibraryExpanded && (
+          <Animated.View entering={FadeInDown.delay(300).springify()} className="mt-8 mb-4">
+            <View className="px-5 mb-4">
+              <Text className="text-glacier text-[20px] font-bold tracking-tighter">Meaningful Conversations</Text>
+              <Text className="text-slate-muted text-[12px] mt-1 italic">36 Questions to deepen connection</Text>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+              snapToInterval={176}
+              decelerationRate="fast"
+            >
+              {conversationStarters.conversation_decks.map((deck, i) => (
+                <ConversationDeckCard
+                  key={deck.deck_id}
+                  deck={deck as DeckData}
+                  index={i}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedDeck(deck as DeckData);
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </Animated.View>
         )}
 
         {/* ── State C: The Library ── */}
@@ -306,14 +335,14 @@ export default function DatesScreen() {
             {categories.map((cat, ci) => (
               <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
             <View className="px-5 mb-4">
-              <Text className="text-[#F8FAFC] text-[18px] font-bold tracking-tighter">{cat.category}</Text>
-              <Text className="text-[#475569] text-[12px] mt-0.5 italic">{cat.scientific_basis}</Text>
+              <Text className="text-glacier text-[18px] font-bold tracking-tighter">{cat.category}</Text>
+              <Text className="text-slate-muted text-[12px] mt-1 italic">{cat.scientific_basis}</Text>
             </View>
 
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 12, paddingBottom: 30}}
               snapToInterval={176}
               decelerationRate="fast"
             >
@@ -345,6 +374,13 @@ export default function DatesScreen() {
         myName={myName}
         partnerName={partnerName}
         onClose={handleDateControllerClose}
+      />
+
+      {/* Conversation Deck Controller modal */}
+      <ConversationDeckController
+        visible={!!selectedDeck}
+        deck={selectedDeck}
+        onClose={() => setSelectedDeck(null)}
       />
     </View>
   );
