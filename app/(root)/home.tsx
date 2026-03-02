@@ -20,12 +20,14 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
+  FadeIn,
   FadeOut,
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withSequence,
   withTiming,
+  withSpring,
   Easing,
 } from 'react-native-reanimated';
 import { supabase } from '@/src/lib/supabase';
@@ -33,6 +35,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
 import { useActiveSession } from '@/src/hooks/useActiveSession';
+import { useDailySpark } from '@/src/hooks/useDailySpark';
 import guidedDatesData from '@/assets/guided-dates/guided-dates.json';
 import type { Category } from '@/src/components/guided-dates/types';
 
@@ -42,11 +45,6 @@ interface PartnerProfile {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
-}
-
-interface DailySpark {
-  id: string;
-  question_text: string;
 }
 
 // ── Avatar ───────────────────────────────────────────────────────────────────
@@ -172,12 +170,21 @@ export default function HomeScreen() {
 
   const [myProfile, setMyProfile] = useState<PartnerProfile | null>(null);
   const [partner, setPartner] = useState<PartnerProfile | null>(null);
-  const [spark, setSpark] = useState<DailySpark | null>(null);
-  const [myAnswer, setMyAnswer] = useState('');
-  const [partnerAnswer, setPartnerAnswer] = useState<string | null>(null);
-  const [answerSubmitted, setAnswerSubmitted] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  // Local draft text for the input box
+  const [draftAnswer, setDraftAnswer] = useState('');
+
+  // ── Daily Spark hook ───────────────────────────────────────────────────────
+  const {
+    spark,
+    myAnswer,
+    partnerAnswer,
+    sparkState,
+    loading: loadingData,
+    submitting,
+    submitAnswer,
+    error: sparkError,
+  } = useDailySpark();
 
   // ── Real-time session hook ─────────────────────────────────────────────────
   const { incomingSession, acceptSession } = useActiveSession();
@@ -203,70 +210,84 @@ export default function HomeScreen() {
     }
   }, [!!incomingSession]);
 
+  // ── Lock-icon pulse (waiting state) ──────────────────────────────────────
+  const lockScale = useSharedValue(1);
+  const lockAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: lockScale.value }],
+  }));
+  useEffect(() => {
+    if (sparkState === 'waiting') {
+      lockScale.value = withRepeat(
+        withSequence(
+          withTiming(1.15, { duration: 900, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.95, { duration: 900, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      lockScale.value = withTiming(1.0, { duration: 200 });
+    }
+  }, [sparkState]);
+
+  // ── Reveal animation (triggered once when state hits 'revealed') ──────────
+  const revealScale = useSharedValue(0.85);
+  const revealOpacity = useSharedValue(0);
+  const revealAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: revealScale.value }],
+    opacity: revealOpacity.value,
+  }));
+  useEffect(() => {
+    if (sparkState === 'revealed') {
+      revealScale.value = withSpring(1, { damping: 14, stiffness: 120 });
+      revealOpacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.ease) });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, [sparkState]);
+
   // ── Accept handler ────────────────────────────────────────────────────────
   const handleAcceptInvite = async () => {
     if (!incomingSession) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await acceptSession(incomingSession.id);
-    // Navigate to Dates tab so DateController can open
     router.push('/(root)/dates');
   };
 
-  // ── Load data ──────────────────────────────────────────────────────────────
+  // ── Load profile + partner ────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    loadData();
+    (async () => {
+      setLoadingProfile(true);
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url, partner_id')
+          .eq('id', user.id)
+          .single();
+        if (profile) {
+          setMyProfile({ id: profile.id, display_name: profile.display_name, avatar_url: profile.avatar_url });
+          if (profile.partner_id) {
+            const { data: partnerData } = await supabase
+              .from('profiles')
+              .select('id, display_name, avatar_url')
+              .eq('id', profile.partner_id)
+              .single();
+            if (partnerData) setPartner(partnerData);
+          }
+        }
+      } catch (e) {
+        console.error('[HomeScreen] loadProfile error:', e);
+      } finally {
+        setLoadingProfile(false);
+      }
+    })();
   }, [user]);
 
-  const loadData = async () => {
-    setLoadingData(true);
-    try {
-      // Fetch own profile + partner info
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url, partner_id')
-        .eq('id', user!.id)
-        .single();
-
-      if (profile) {
-        setMyProfile({ id: profile.id, display_name: profile.display_name, avatar_url: profile.avatar_url });
-
-        if (profile.partner_id) {
-          const { data: partnerData } = await supabase
-            .from('profiles')
-            .select('id, display_name, avatar_url')
-            .eq('id', profile.partner_id)
-            .single();
-          if (partnerData) setPartner(partnerData);
-        }
-      }
-
-      // Fetch today's spark
-      const today = new Date().toISOString().split('T')[0];
-      const { data: sparkData } = await supabase
-        .from('daily_sparks')
-        .select('id, question_text')
-        .eq('release_date', today)
-        .maybeSingle();
-
-      if (sparkData) setSpark(sparkData);
-    } catch (e) {
-      console.error('[HomeScreen] loadData error:', e);
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
   const handleSubmitAnswer = async () => {
-    if (!myAnswer.trim() || submitting) return;
+    if (!draftAnswer.trim() || submitting) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSubmitting(true);
-    // TODO: persist answer to Supabase (spark_answers table)
-    setTimeout(() => {
-      setAnswerSubmitted(true);
-      setSubmitting(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 800);
+    await submitAnswer(draftAnswer);
+    setDraftAnswer('');
   };
 
   const handleSignOut = () => signOut();
@@ -383,23 +404,30 @@ export default function HomeScreen() {
               ) : spark ? (
                 <Text style={styles.sparkQuestion}>{spark.question_text}</Text>
               ) : (
-                <Text style={styles.sparkQuestion}>
-                  "What's one small thing your partner did recently that you appreciated but never mentioned?"
+                <Text style={[styles.sparkQuestion, { color: '#94A3B8', fontSize: 13 }]}>
+                  {sparkError ?? 'No spark today — check back tomorrow! ✨'}
                 </Text>
               )}
 
-              {/* Answer boxes */}
+              {/* Error banner (e.g. save failed) */}
+              {sparkError && spark && (
+                <Text style={{ color: '#FB7185', fontSize: 12, marginBottom: 8 }}>
+                  ⚠ {sparkError}
+                </Text>
+              )}
+
+              {/* ── Answer boxes — 3-state ── */}
               <View style={styles.answersRow}>
-                {/* My answer */}
+
+                {/* MY ANSWER BOX */}
                 <View style={styles.answerBox}>
                   <Text style={styles.answerLabel}>You</Text>
-                  {answerSubmitted ? (
-                    <Text style={styles.answerText}>{myAnswer}</Text>
-                  ) : (
+                  {sparkState === 'pending' ? (
+                    /* State 1: Pending — show input */
                     <>
                       <TextInput
-                        value={myAnswer}
-                        onChangeText={setMyAnswer}
+                        value={draftAnswer}
+                        onChangeText={setDraftAnswer}
                         placeholder="Your answer..."
                         placeholderTextColor="#334155"
                         multiline
@@ -407,8 +435,8 @@ export default function HomeScreen() {
                       />
                       <TouchableOpacity
                         onPress={handleSubmitAnswer}
-                        disabled={!myAnswer.trim() || submitting}
-                        style={[styles.submitBtn, (!myAnswer.trim() || submitting) && { opacity: 0.4 }]}
+                        disabled={!draftAnswer.trim() || submitting}
+                        style={[styles.submitBtn, (!draftAnswer.trim() || submitting) && { opacity: 0.4 }]}
                         activeOpacity={0.8}
                       >
                         {submitting ? (
@@ -418,27 +446,42 @@ export default function HomeScreen() {
                         )}
                       </TouchableOpacity>
                     </>
+                  ) : (
+                    /* State 2 & 3: show submitted answer */
+                    <Text style={styles.answerText}>{myAnswer?.answer_text ?? ''}</Text>
                   )}
                 </View>
 
-                {/* Partner answer — blurred if not submitted */}
+                {/* PARTNER ANSWER BOX */}
                 <View style={[styles.answerBox, { overflow: 'hidden' }]}>
-                  <Text style={styles.answerLabel}>{partner?.display_name?.split(' ')[0] ?? 'Partner'}</Text>
-                  {partnerAnswer && answerSubmitted ? (
-                    <Text style={styles.answerText}>{partnerAnswer}</Text>
+                  <Text style={styles.answerLabel}>
+                    {partner?.display_name?.split(' ')[0] ?? 'Partner'}
+                  </Text>
+
+                  {sparkState === 'revealed' ? (
+                    /* State 3: Revealed — animate in partner answer */
+                    <Animated.View style={[{ flex: 1 }, revealAnimStyle]}>
+                      <Text style={styles.answerText}>{partnerAnswer?.answer_text ?? ''}</Text>
+                    </Animated.View>
                   ) : (
+                    /* State 1 & 2: Locked */
                     <>
-                      {/* Blurred placeholder */}
                       <View style={styles.blurredContent}>
                         <Text style={styles.blurredPlaceholderText}>
-                          Lorem ipsum dolor sit amet consectetur, they wrote something beautiful here...
+                          They wrote something beautiful here...
                         </Text>
                       </View>
-                      <BlurView tint="dark" intensity={answerSubmitted ? 20 : 70} style={StyleSheet.absoluteFillObject}>
+                      <BlurView
+                        tint="dark"
+                        intensity={sparkState === 'waiting' ? 55 : 72}
+                        style={StyleSheet.absoluteFillObject}
+                      >
                         <View style={styles.lockOverlay}>
-                          <Ionicons name="lock-closed" size={22} color="#F59E0B" />
+                          <Animated.View style={lockAnimStyle}>
+                            <Ionicons name="lock-closed" size={22} color="#F59E0B" />
+                          </Animated.View>
                           <Text style={styles.lockText}>
-                            {answerSubmitted ? 'Waiting...' : 'Answer first'}
+                            {sparkState === 'waiting' ? 'Waiting for partner…' : 'Answer first'}
                           </Text>
                         </View>
                       </BlurView>

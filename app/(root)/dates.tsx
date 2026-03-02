@@ -305,7 +305,7 @@ export default function DatesScreen() {
           <Animated.View entering={FadeInDown.delay(300).springify()} className="mt-8 mb-4">
             <View className="px-5 mb-4">
               <Text className="text-glacier text-[20px] font-bold tracking-tighter">Meaningful Conversations</Text>
-              <Text className="text-slate-muted text-[12px] mt-1 italic">36 Questions to deepen connection</Text>
+              <Text className="text-slate-muted text-[12px] mt-1">36 Questions to deepen connection</Text>
             </View>
             <ScrollView
               horizontal

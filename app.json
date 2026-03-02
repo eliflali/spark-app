@@ -14,7 +14,9 @@
       "expo-router",
       "expo-apple-authentication",
       "expo-secure-store",
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -31,8 +33,11 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cankuslar.spark",
       "appleTeamId": "K58P9S6K53",
+      "googleServicesFile": "./ios/GoogleService-Info.plist",
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.cankuslar.spark"]
+        "com.apple.security.application-groups": [
+          "group.com.cankuslar.spark"
+        ]
       }
     },
     "android": {
@@ -40,7 +45,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.cankuslar.spark"
+      "package": "com.cankuslar.spark",
+      "googleServicesFile": "./google-services.json"
     }
   }
 }

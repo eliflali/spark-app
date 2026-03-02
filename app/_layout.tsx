@@ -1,5 +1,6 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { RevenueCatProvider } from '@/src/context/RevenueCatContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,8 +8,41 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/src/lib/supabase';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
+import messaging from '@react-native-firebase/messaging';
 
 import '../global.css';
+
+// ── FCM Token Registration ────────────────────────────────────────────────────
+// Requests notification permission (iOS) and saves the device's FCM token
+// to profiles.fcm_token so the Edge Function can send push notifications.
+
+async function registerFcmToken(userId: string) {
+  try {
+    // Ask for permission on iOS; Android grants automatically
+    if (Platform.OS === 'ios') {
+      const authStatus = await messaging().requestPermission();
+      const allowed =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      if (!allowed) return;
+    }
+
+    const token = await messaging().getToken();
+    if (!token) return;
+
+    await supabase
+      .from('profiles')
+      .update({ fcm_token: token })
+      .eq('id', userId);
+
+    console.log('[FCM] Token registered for user', userId);
+  } catch (err) {
+    // Firebase messaging isn't available in Expo Go — swallow the error
+    console.warn('[FCM] Could not register token:', err);
+  }
+}
+
+// ── Route Guard ───────────────────────────────────────────────────────────────
 
 function RouteGuard() {
   const { session, loading } = useAuth();
@@ -26,6 +60,28 @@ function RouteGuard() {
       setOnboardingChecked(true);
     });
   }, []);
+
+  // ── Register FCM token whenever a session is established ────────────────────────
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    let unsubscribe: (() => void) | undefined;
+    (async () => {
+      try {
+        await registerFcmToken(session.user.id);
+        // Keep token fresh if Firebase rotates it
+        unsubscribe = messaging().onTokenRefresh((newToken) => {
+          supabase
+            .from('profiles')
+            .update({ fcm_token: newToken })
+            .eq('id', session.user.id)
+            .then(() => console.log('[FCM] Token refreshed'));
+        });
+      } catch (err) {
+        console.warn('[FCM] Firebase not ready:', err);
+      }
+    })();
+    return () => unsubscribe?.();
+  }, [session?.user?.id]);
 
   // Check partner status whenever session changes
   useEffect(() => {
@@ -52,15 +108,11 @@ function RouteGuard() {
     const isPaywall = (segments as string[])[1] === 'paywall';
 
     if (session && !inRootGroup && !isInvitePartner && !isPaywall) {
-      // Signed in and not in app area yet.
-      // If we haven't fetched partner status yet, wait before routing.
       if (hasPartner === null) return;
 
       if (!hasPartner) {
-        // User is logged in but has no partner → show invite screen
         router.replace('/(auth)/invite-partner');
       } else {
-        // User is fully set up → go home
         router.replace('/(root)/home');
       }
     } else if (!session && !inAuthGroup) {
