@@ -18,26 +18,32 @@ import '../global.css';
 
 async function registerFcmToken(userId: string) {
   try {
-    // Ask for permission on iOS; Android grants automatically
+    // iOS: request notification permission
     if (Platform.OS === 'ios') {
       const authStatus = await messaging().requestPermission();
       const allowed =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-      if (!allowed) return;
+      if (!allowed) {
+        console.warn('[FCM] Notification permission denied');
+        return;
+      }
     }
 
     const token = await messaging().getToken();
-    if (!token) return;
+    if (!token) {
+      console.warn('[FCM] getToken returned empty');
+      return;
+    }
 
     await supabase
       .from('profiles')
       .update({ fcm_token: token })
       .eq('id', userId);
 
-    console.log('[FCM] Token registered for user', userId);
+    console.log('[FCM] Token registered for user', userId, '→', token.slice(0, 20) + '...');
   } catch (err) {
-    // Firebase messaging isn't available in Expo Go — swallow the error
+    // Firebase messaging not available in Expo Go — silently skip
     console.warn('[FCM] Could not register token:', err);
   }
 }

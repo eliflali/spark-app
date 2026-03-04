@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,9 @@ import {
   StyleSheet,
   Platform,
   Alert,
+  Modal,
+  KeyboardAvoidingView,
+  Pressable,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -36,6 +39,7 @@ import { useRevenueCat } from '@/src/context/RevenueCatContext';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
 import { useActiveSession } from '@/src/hooks/useActiveSession';
 import { useDailySpark } from '@/src/hooks/useDailySpark';
+import { useWidgetSurprise } from '@/src/hooks/useWidgetSurprise';
 import guidedDatesData from '@/assets/guided-dates/guided-dates.json';
 import type { Category } from '@/src/components/guided-dates/types';
 
@@ -174,6 +178,18 @@ export default function HomeScreen() {
   // Local draft text for the input box
   const [draftAnswer, setDraftAnswer] = useState('');
 
+  // ── Widget Surprise state ──────────────────────────────────────────────────
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [draftNote, setDraftNote] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { partnerSurprise, sending: sendingSurprise, sendNote, sendPhoto, sendReaction } =
+    useWidgetSurprise();
+
+  console.log('partnerSurprise', partnerSurprise);
+
   // ── Daily Spark hook ───────────────────────────────────────────────────────
   const {
     spark,
@@ -290,6 +306,65 @@ export default function HomeScreen() {
     setDraftAnswer('');
   };
 
+  // ── Widget helpers ────────────────────────────────────────────────────────
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setToastVisible(true);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastVisible(false), 2200);
+  };
+
+  const partnerFirstName = partner?.display_name?.split(' ')[0] ?? 'Partner';
+
+  const handleWidgetPhoto = () => {
+    Alert.alert('Send a Photo', 'Choose source', [
+      {
+        text: 'Camera',
+        onPress: async () => {
+          try {
+            await sendPhoto('camera');
+            showToast(`Sent to ${partnerFirstName}'s Widget! ✨`);
+          } catch (e: any) {
+            showToast(`Failed to send photo: ${e?.message ?? 'Unknown error'}`);
+          }
+        },
+      },
+      {
+        text: 'Gallery',
+        onPress: async () => {
+          try {
+            await sendPhoto('gallery');
+            showToast(`Sent to ${partnerFirstName}'s Widget! ✨`);
+          } catch (e: any) {
+            showToast(`Failed to send photo: ${e?.message ?? 'Unknown error'}`);
+          }
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleWidgetNoteSubmit = async () => {
+    if (!draftNote.trim()) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await sendNote(draftNote);
+      showToast(`Sent to ${partnerFirstName}'s Widget! ✨`);
+      setDraftNote('');
+      setNoteModalVisible(false);
+    } catch (e: any) {
+      showToast(`Failed to send note: ${e?.message ?? 'Unknown error'}`);
+    }
+  };
+
+  const handleWidgetReaction = async (emoji: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await sendReaction(emoji);
+      showToast(`Sent to ${partnerFirstName}'s Widget! ✨`);
+    } catch {}
+  };
+
   const handleSignOut = () => signOut();
 
   const handleDebugReset = () => {
@@ -317,9 +392,15 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        
         {/* ── Top Header ── */}
         <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.topHeader}>
           <PartnerHeader myProfile={myProfile} partner={partner} />
+          
+        </Animated.View>
+
+        {/* ── Greeting ── */}
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.greetingRow}>
           <Animated.View style={logoAnimStyle}>
             {incomingSession && (
               <View style={styles.logoGlowRing} pointerEvents="none" />
@@ -329,10 +410,6 @@ export default function HomeScreen() {
               style={styles.logo}
             />
           </Animated.View>
-        </Animated.View>
-
-        {/* ── Greeting ── */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.greetingRow}>
           <View>
             <Text style={styles.greetingSub}>Good {getTimeOfDay()}</Text>
             <Text style={styles.greetingName}>
@@ -505,23 +582,75 @@ export default function HomeScreen() {
                 Send a secret photo or sticky note to your partner's home screen widget.
               </Text>
 
+              {/* ── Action buttons ── */}
               <View style={styles.widgetOptions}>
-                {/* Photo option */}
-                <TouchableOpacity style={styles.widgetOption} activeOpacity={0.8}>
-                  <Ionicons name="camera-outline" size={28} color="#94A3B8" />
+                {/* Photo */}
+                <TouchableOpacity
+                  style={styles.widgetOption}
+                  activeOpacity={0.8}
+                  onPress={handleWidgetPhoto}
+                  disabled={sendingSurprise}
+                >
+                  <Ionicons name="camera-outline" size={28} color="#F59E0B" />
                   <Text style={styles.widgetOptionLabel}>Photo</Text>
                 </TouchableOpacity>
-                {/* Note option */}
-                <TouchableOpacity style={styles.widgetOption} activeOpacity={0.8}>
-                  <Ionicons name="pencil-outline" size={28} color="#94A3B8" />
+
+                {/* Sticky Note */}
+                <TouchableOpacity
+                  style={styles.widgetOption}
+                  activeOpacity={0.8}
+                  onPress={() => setNoteModalVisible(true)}
+                  disabled={sendingSurprise}
+                >
+                  <Ionicons name="pencil-outline" size={28} color="#F59E0B" />
                   <Text style={styles.widgetOptionLabel}>Sticky Note</Text>
                 </TouchableOpacity>
-                {/* Emoji option */}
-                <TouchableOpacity style={styles.widgetOption} activeOpacity={0.8}>
-                  <Ionicons name="heart-outline" size={28} color="#94A3B8" />
-                  <Text style={styles.widgetOptionLabel}>Reaction</Text>
-                </TouchableOpacity>
+
+                {/* Reaction tray (single tap cycles through preset emojis) */}
+                <View style={[styles.widgetOption, { gap: 0 }]}>
+                  <Text style={styles.widgetOptionLabel}>Reactions</Text>
+                  <View style={styles.reactionTray}>
+                    {['❤️', '🔥', '😍', '✨', '🥰', '💌'].map((emoji) => (
+                      <TouchableOpacity
+                        key={emoji}
+                        onPress={() => handleWidgetReaction(emoji)}
+                        disabled={sendingSurprise}
+                        activeOpacity={0.7}
+                        style={styles.reactionBtn}
+                      >
+                        <Text style={styles.reactionEmoji}>{emoji}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
               </View>
+
+              {/* ── Incoming surprise preview ── */}
+              {partnerSurprise && (
+                <Animated.View entering={FadeIn.duration(400)} style={styles.incomingCard}>
+                  <Text style={styles.incomingLabel}>
+                    💌 From {partnerSurprise.sender_name?.split(' ')[0] ?? 'Partner'}
+                  </Text>
+
+                  {partnerSurprise.type === 'PHOTO' && (
+                    <Image
+                      source={{ uri: partnerSurprise.content }}
+                      style={styles.incomingPhoto}
+                      resizeMode="cover"
+                    />
+                  )}
+
+                  {partnerSurprise.type === 'NOTE' && (
+                    <View style={styles.incomingStickyNote}>
+                      <Text style={styles.incomingNoteText}>{partnerSurprise.content}</Text>
+                    </View>
+                  )}
+
+                  {partnerSurprise.type === 'REACTION' && (
+                    <Text style={styles.incomingReactionEmoji}>{partnerSurprise.content}</Text>
+                  )}
+                </Animated.View>
+              )}
             </View>
           </BlurView>
         </Animated.View>
@@ -536,6 +665,69 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* ── Toast overlay ── */}
+      {toastVisible && (
+        <Animated.View
+          entering={FadeInDown.springify()}
+          exiting={FadeOut.duration(300)}
+          style={styles.toast}
+          pointerEvents="none"
+        >
+          <Text style={styles.toastText}>{toastMsg}</Text>
+        </Animated.View>
+      )}
+
+      {/* ── Sticky Note Modal ── */}
+      <Modal
+        visible={noteModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setNoteModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalBackdrop}
+        >
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setNoteModalVisible(false)} />
+          <BlurView tint="dark" intensity={60} style={styles.noteModal}>
+            <LinearGradient
+              colors={['rgba(245,158,11,0.1)', 'rgba(15,23,42,0.95)']}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={styles.noteModalInner}>
+              <View style={styles.noteModalHandle} />
+              <Text style={styles.noteModalTitle}>✍️ Write a Sticky Note</Text>
+              <Text style={styles.noteModalSub}>Only your partner will see this on their widget.</Text>
+
+              <TextInput
+                value={draftNote}
+                onChangeText={setDraftNote}
+                placeholder="Type something sweet..."
+                placeholderTextColor="#475569"
+                multiline
+                maxLength={140}
+                autoFocus
+                style={styles.noteInput}
+              />
+              <Text style={styles.noteCharCount}>{draftNote.length}/140</Text>
+
+              <TouchableOpacity
+                onPress={handleWidgetNoteSubmit}
+                disabled={!draftNote.trim() || sendingSurprise}
+                style={[styles.noteSendBtn, (!draftNote.trim() || sendingSurprise) && { opacity: 0.4 }]}
+                activeOpacity={0.85}
+              >
+                {sendingSurprise ? (
+                  <ActivityIndicator size="small" color="#0F172A" />
+                ) : (
+                  <Text style={styles.noteSendBtnText}>Send to Widget ✦</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -850,5 +1042,161 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  // ── Reaction tray ─────────────────────────────────────────────────────────
+  reactionTray: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  reactionBtn: {
+    padding: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  reactionEmoji: {
+    fontSize: 20,
+  },
+
+  // ── Incoming surprise preview ─────────────────────────────────────────────
+  incomingCard: {
+    marginTop: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(251,113,133,0.25)',
+    backgroundColor: 'rgba(251,113,133,0.06)',
+    padding: 14,
+    gap: 10,
+  },
+  incomingLabel: {
+    color: '#FB7185',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  incomingPhoto: {
+    width: '100%',
+    height: 180,
+    borderRadius: 14,
+    backgroundColor: '#1E293B',
+  },
+  incomingStickyNote: {
+    backgroundColor: 'rgba(251,191,36,0.12)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(251,191,36,0.25)',
+    padding: 14,
+  },
+  incomingNoteText: {
+    color: '#FDE68A',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+  },
+  incomingReactionEmoji: {
+    fontSize: 48,
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  toast: {
+    position: 'absolute',
+    bottom: 110,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(15,23,42,0.92)',
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.35)',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  toastText: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+
+  // ── Sticky-note modal ─────────────────────────────────────────────────────
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  noteModal: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.2)',
+  },
+  noteModalInner: {
+    padding: 24,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  noteModalHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignSelf: 'center',
+    marginBottom: 4,
+  },
+  noteModalTitle: {
+    color: '#F8FAFC',
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  noteModalSub: {
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  noteInput: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    color: '#E2EAF4',
+    fontSize: 16,
+    lineHeight: 24,
+    padding: 16,
+    minHeight: 110,
+    textAlignVertical: 'top',
+    marginTop: 4,
+  },
+  noteCharCount: {
+    color: '#475569',
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  noteSendBtn: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 4,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  noteSendBtnText: {
+    color: '#0F172A',
+    fontWeight: '800',
+    fontSize: 15,
+    letterSpacing: 0.2,
   },
 });

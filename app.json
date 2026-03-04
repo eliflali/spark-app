@@ -14,6 +14,14 @@
       "expo-router",
       "expo-apple-authentication",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to send photo surprises.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to send photo surprises.",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for video."
+        }
+      ],
       "@bacons/apple-targets",
       "@react-native-firebase/app",
       "@react-native-firebase/messaging"
@@ -35,6 +43,7 @@
       "appleTeamId": "K58P9S6K53",
       "googleServicesFile": "./ios/GoogleService-Info.plist",
       "entitlements": {
+        "aps-environment": "development",
         "com.apple.security.application-groups": [
           "group.com.cankuslar.spark"
         ]

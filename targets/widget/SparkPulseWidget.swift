@@ -1,123 +1,316 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Data Model
+// MARK: - Constants
+
+private let kAppGroup      = "group.com.cankuslar.spark"
+private let kEdgeFnURL     = "https://apzsnrkehgmwrsqcynbw.supabase.co/functions/v1/widget-surprise-payload"
+
+// MARK: - Surprise Type
+
+enum SurpriseKind: String, Codable {
+    case photo    = "PHOTO"
+    case note     = "NOTE"
+    case reaction = "REACTION"
+}
+
+// MARK: - App-Group data model (shared with main app)
+
+struct WidgetSurprise: Codable {
+    var type: SurpriseKind
+    var content: String        // note text | photo URL | emoji
+    var senderName: String
+    var createdAt: String
+
+    static let placeholder = WidgetSurprise(
+        type: .note,
+        content: "A secret is on its way… ✨",
+        senderName: "Spark",
+        createdAt: ""
+    )
+}
+
+// Keys inside UserDefaults(suiteName:)
+enum WidgetKeys {
+    static let surprise  = "widgetSurprise"   // JSON-encoded WidgetSurprise
+    static let jwt       = "supabaseJWT"      // stored by the main app after login
+}
+
+// MARK: - Timeline Entry
 
 struct SparkPulseEntry: TimelineEntry {
     let date: Date
-    let senderName: String
-    let text: String
+    let surprise: WidgetSurprise
+    let isPlaceholder: Bool
 }
 
 // MARK: - Timeline Provider
 
 struct SparkPulseProvider: TimelineProvider {
-    let appGroupId = "group.com.cankuslar.spark"
 
+    // Placeholder shown during widget gallery / configuration
     func placeholder(in context: Context) -> SparkPulseEntry {
-        SparkPulseEntry(
-            date: Date(),
-            senderName: "Spark",
-            text: "A surprise is waiting for you ✨"
-        )
+        SparkPulseEntry(date: Date(), surprise: .placeholder, isPlaceholder: true)
     }
 
+    // Snapshot shown in the widget picker — use cached data for speed
     func getSnapshot(in context: Context, completion: @escaping (SparkPulseEntry) -> Void) {
-        let entry = getEntryFromStorage()
-        completion(entry)
+        completion(SparkPulseEntry(date: Date(), surprise: cachedSurprise(), isPlaceholder: false))
     }
 
+    // Full timeline: try to fetch fresh data, fall back to cache
     func getTimeline(in context: Context, completion: @escaping (Timeline<SparkPulseEntry>) -> Void) {
-        let entry = getEntryFromStorage()
-        let timeline = Timeline(entries: [entry], policy: .atEnd)
-        completion(timeline)
+        Task {
+            let surprise = await fetchOrFallback()
+            // Refresh every 30 minutes by default; silent push will force early refresh
+            let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
+            let timeline = Timeline(
+                entries: [SparkPulseEntry(date: Date(), surprise: surprise, isPlaceholder: false)],
+                policy: .after(nextUpdate)
+            )
+            completion(timeline)
+        }
     }
 
-    private func getEntryFromStorage() -> SparkPulseEntry {
-        let defaults = UserDefaults(suiteName: appGroupId)
-        let senderName = defaults?.string(forKey: "senderName") ?? "Spark"
-        let text = defaults?.string(forKey: "text") ?? "No new surprises yet..."
-        return SparkPulseEntry(date: Date(), senderName: senderName, text: text)
+    // MARK: Private helpers
+
+    private func cachedSurprise() -> WidgetSurprise {
+        guard
+            let defaults = UserDefaults(suiteName: kAppGroup),
+            let data = defaults.data(forKey: WidgetKeys.surprise),
+            let decoded = try? JSONDecoder().decode(WidgetSurprise.self, from: data)
+        else { return .placeholder }
+        return decoded
     }
-}
 
-// MARK: - Widget Views
+    private func fetchOrFallback() async -> WidgetSurprise {
+        guard
+            let defaults = UserDefaults(suiteName: kAppGroup),
+            let jwt = defaults.string(forKey: WidgetKeys.jwt),
+            !jwt.isEmpty,
+            let url = URL(string: kEdgeFnURL)
+        else { return cachedSurprise() }
 
-struct SparkPulseSmallView: View {
-    let entry: SparkPulseEntry
+        do {
+            var request = URLRequest(url: url, timeoutInterval: 10)
+            request.setValue("Bearer \(jwt)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
 
-    var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
-                Text(entry.senderName)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+                return cachedSurprise()
             }
 
-            Text(entry.text)
-                .font(.system(size: 13))
-                .foregroundStyle(.white)
-                .lineLimit(3)
+            struct EdgeResponse: Decodable {
+                struct Payload: Decodable {
+                    let type: String
+                    let content: String
+                    let sender_name: String
+                    let created_at: String?
+                }
+                let data: Payload?
+            }
+
+            let decoded = try JSONDecoder().decode(EdgeResponse.self, from: data)
+            guard let payload = decoded.data else { return cachedSurprise() }
+
+            let surprise = WidgetSurprise(
+                type: SurpriseKind(rawValue: payload.type) ?? .note,
+                content: payload.content,
+                senderName: payload.sender_name,
+                createdAt: payload.created_at ?? ""
+            )
+
+            // Persist for offline / snapshot use
+            if let encoded = try? JSONEncoder().encode(surprise) {
+                defaults.set(encoded, forKey: WidgetKeys.surprise)
+            }
+
+            return surprise
+        } catch {
+            return cachedSurprise()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-struct SparkPulseMediumView: View {
+// MARK: - Shared Design Tokens
+
+private enum DS {
+    static let bg        = Color(hex: "#0F172A")
+    static let amber     = Color(hex: "#F59E0B")
+    static let rose      = Color(hex: "#FB7185")
+    static let slate     = Color(hex: "#94A3B8")
+    static let stickyBg  = Color(hex: "#1E293B")
+    static let stickyBdr = Color(hex: "#FBBF24")
+    static let surface   = Color.white.opacity(0.06)
+}
+
+// MARK: - Subviews: Photo
+
+struct PhotoWidgetView: View {
     let entry: SparkPulseEntry
+    @Environment(\.widgetFamily) var family
 
     var body: some View {
-        VStack(spacing: 8) {
+        ZStack(alignment: .bottomLeading) {
+            AsyncImage(url: URL(string: entry.surprise.content)) { phase in
+                switch phase {
+                case .success(let img):
+                    img.resizable().scaledToFill()
+                case .failure:
+                    fallbackPhotoPlaceholder
+                default:
+                    Color(hex: "#1E293B")
+                        .overlay(
+                            ProgressView().tint(DS.amber)
+                        )
+                }
+            }
+
+            // Sender name badge
+            senderBadge(label: "📷 \(entry.surprise.senderName)")
+        }
+        .clipped()
+    }
+
+    private var fallbackPhotoPlaceholder: some View {
+        DS.stickyBg
+            .overlay(
+                VStack(spacing: 8) {
+                    Image(systemName: "photo")
+                        .font(.system(size: 32, weight: .light))
+                        .foregroundStyle(DS.slate)
+                    Text("Photo from \(entry.surprise.senderName)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(DS.slate)
+                }
+            )
+    }
+}
+
+// MARK: - Subviews: Note
+
+struct NoteWidgetView: View {
+    let entry: SparkPulseEntry
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Top bar
             HStack(spacing: 6) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
-                Text("\(entry.senderName) says:")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(DS.amber)
+                Text(entry.surprise.senderName)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(DS.amber)
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "note.text")
+                    .font(.system(size: 11))
+                    .foregroundStyle(DS.slate)
             }
 
-            Text(entry.text)
-                .font(.system(size: 14))
-                .foregroundStyle(.white)
-                .lineLimit(4)
-                .multilineTextAlignment(.center)
+            // Sticky note body
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: "#FBBF24").opacity(0.10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color(hex: "#FBBF24").opacity(0.25), lineWidth: 1)
+                    )
+
+                Text(entry.surprise.content)
+                    .font(.system(size: noteSize, weight: .medium))
+                    .foregroundStyle(Color(hex: "#FDE68A"))
+                    .lineLimit(noteLines)
+                    .padding(12)
+            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(family == .systemSmall ? 14 : 18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private var noteSize: CGFloat {
+        switch family {
+        case .systemSmall:  return 13
+        case .systemMedium: return 14
+        default:            return 16
+        }
+    }
+
+    private var noteLines: Int {
+        switch family {
+        case .systemSmall:  return 4
+        case .systemMedium: return 5
+        default:            return 9
+        }
     }
 }
 
-struct SparkPulseLargeView: View {
+// MARK: - Subviews: Reaction
+
+struct ReactionWidgetView: View {
     let entry: SparkPulseEntry
+    @Environment(\.widgetFamily) var family
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
-                Text("\(entry.senderName) says:")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(Color(hex: "#F59E0B"))
+        VStack(spacing: family == .systemSmall ? 8 : 14) {
+            Text(entry.surprise.content)
+                .font(.system(size: emojiSize))
+
+            VStack(spacing: 3) {
+                Text(entry.surprise.senderName)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(DS.amber)
+                Text("sent a reaction")
+                    .font(.system(size: 11))
+                    .foregroundStyle(DS.slate)
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 
-            Divider()
-                .background(Color.white.opacity(0.2))
+    private var emojiSize: CGFloat {
+        switch family {
+        case .systemSmall:  return 44
+        case .systemMedium: return 56
+        default:            return 72
+        }
+    }
+}
 
-            Text(entry.text)
-                .font(.system(size: 16))
+// MARK: - Shared sender badge helper
+
+private func senderBadge(label: String) -> some View {
+    Text(label)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(.ultraThinMaterial, in: Capsule())
+        .padding(12)
+}
+
+// MARK: - Placeholder / Empty State
+
+struct EmptyWidgetView: View {
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "gift")
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(DS.amber)
+            Text("No surprises yet")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.white)
-                .lineLimit(8)
-                .multilineTextAlignment(.center)
+            Text("Hint your partner 😉")
+                .font(.system(size: 11))
+                .foregroundStyle(DS.slate)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-// MARK: - Widget Entry View
+// MARK: - Entry View (dispatcher)
 
 struct SparkPulseWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
@@ -125,19 +318,21 @@ struct SparkPulseWidgetEntryView: View {
 
     var body: some View {
         Group {
-            switch family {
-            case .systemSmall:
-                SparkPulseSmallView(entry: entry)
-            case .systemMedium:
-                SparkPulseMediumView(entry: entry)
-            case .systemLarge:
-                SparkPulseLargeView(entry: entry)
-            default:
-                SparkPulseSmallView(entry: entry)
+            if entry.isPlaceholder {
+                EmptyWidgetView()
+            } else {
+                switch entry.surprise.type {
+                case .photo:
+                    PhotoWidgetView(entry: entry)
+                case .note:
+                    NoteWidgetView(entry: entry)
+                case .reaction:
+                    ReactionWidgetView(entry: entry)
+                }
             }
         }
         .containerBackground(for: .widget) {
-            Color(hex: "#0F172A")
+            DS.bg
         }
     }
 }
@@ -165,10 +360,9 @@ extension Color {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
-        let r, g, b: Double
-        r = Double((int >> 16) & 0xFF) / 255.0
-        g = Double((int >> 8) & 0xFF) / 255.0
-        b = Double(int & 0xFF) / 255.0
+        let r = Double((int >> 16) & 0xFF) / 255.0
+        let g = Double((int >> 8)  & 0xFF) / 255.0
+        let b = Double(int         & 0xFF) / 255.0
         self.init(red: r, green: g, blue: b)
     }
 }

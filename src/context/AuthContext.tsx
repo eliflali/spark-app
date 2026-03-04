@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { NativeModules } from 'react-native';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/src/lib/supabase';
 
@@ -25,6 +26,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setLoading(false);
+      if (s?.access_token) {
+        NativeModules.SparkWidget?.saveJWT?.(s.access_token);
+      }
     });
 
     // Listen for auth state changes (sign in, sign out, token refresh)
@@ -33,12 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setSession(session);
       setLoading(false);
+      // Keep the widget JWT in sync so it can authenticate network fetches
+      if (session?.access_token) {
+        NativeModules.SparkWidget?.saveJWT?.(session.access_token);
+      } else {
+        NativeModules.SparkWidget?.clear?.();
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
+    NativeModules.SparkWidget?.clear?.();
     await supabase.auth.signOut();
   };
 
