@@ -219,9 +219,9 @@ export default function HomeScreen() {
                 />
               </Animated.View>
               <View>
-                <Text className="text-[14px] font-light text-[#94A3B8]">Good {getTimeOfDay()} {myProfile?.display_name?.split(' ')[0]}</Text>
+                <Text className="text-[14px] font-light text-slate-muted">Good {getTimeOfDay()} {myProfile?.display_name?.split(' ')[0]}</Text>
                 <Text className="text-[28px] font-medium tracking-tight text-glacier">
-                  Welcome 👋
+                  Welcome
                 </Text>
               </View>
             </View>

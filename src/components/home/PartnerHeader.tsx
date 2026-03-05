@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AvatarCircle } from './AvatarCircle';
+import { Image } from 'react-native';
 import type { PartnerProfile } from './types';
 
 export function PartnerHeader({
@@ -41,7 +42,7 @@ export function PartnerHeader({
       <AvatarCircle name={myProfile?.display_name ?? null} avatarUrl={myProfile?.avatar_url ?? null} />
 
       {/* Connecting line */}
-      <View className="relative mx-2 h-0.5 flex-1">
+      <View className="relative mx-2 h-0.5 flex-1 items-center justify-center">
         <View className="absolute bottom-0 left-0 right-0 top-0 rounded-sm bg-spark/20" />
         <Animated.View style={animStyle} className="absolute bottom-0 left-0 right-0 top-0 rounded-sm">
           <LinearGradient
@@ -51,6 +52,11 @@ export function PartnerHeader({
             style={{ flex: 1, borderRadius: 2 }}
           />
         </Animated.View>
+        
+        <Image
+          source={require('@/assets/logo-transparent-bg.png')}
+          className="absolute h-10 w-10"
+        />
       </View>
 
       {partner ? (

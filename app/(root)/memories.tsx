@@ -12,78 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type MemoryType = 'spark' | 'photo' | 'date';
-
-interface Memory {
-  id: string;
-  type: MemoryType;
-  date: string;
-  title: string;
-  preview: string;
-  emoji: string;
-  color: string;
-}
-
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-
-const MOCK_MEMORIES: Memory[] = [
-  {
-    id: '1',
-    type: 'spark',
-    date: 'Today',
-    title: 'Daily Spark',
-    preview: "What's one small thing your partner did recently that you appreciated but never mentioned?",
-    emoji: '✨',
-    color: '#F59E0B',
-  },
-  {
-    id: '2',
-    type: 'date',
-    date: 'Feb 24',
-    title: 'The 20-Second Hug',
-    preview: 'We held each other until the world melted away. It worked.',
-    emoji: '🤍',
-    color: '#34D399',
-  },
-  {
-    id: '3',
-    type: 'spark',
-    date: 'Feb 23',
-    title: 'Daily Spark',
-    preview: 'If you could relive one moment from our relationship, which would it be?',
-    emoji: '🔥',
-    color: '#F59E0B',
-  },
-  {
-    id: '4',
-    type: 'photo',
-    date: 'Feb 22',
-    title: 'Widget Surprise',
-    preview: 'A secret photo from the morning walk 🌿',
-    emoji: '📸',
-    color: '#818CF8',
-  },
-  {
-    id: '5',
-    type: 'date',
-    date: 'Feb 21',
-    title: 'Eye Contact Marathon',
-    preview: '4 minutes of silent connection. It felt like hours.',
-    emoji: '👁',
-    color: '#34D399',
-  },
-  {
-    id: '6',
-    type: 'spark',
-    date: 'Feb 20',
-    title: 'Daily Spark',
-    preview: 'What song would be the soundtrack of our relationship right now?',
-    emoji: '✨',
-    color: '#F59E0B',
-  },
-];
+import { useMemories, Memory, MemoryType } from '@/src/hooks/useMemories';
 
 // ── Memory Card ───────────────────────────────────────────────────────────────
 
@@ -101,7 +30,9 @@ function MemoryCard({ memory, index }: { memory: Memory; index: number }) {
               <Text style={{ fontSize: 20 }}>{memory.emoji}</Text>
             </View>
             <View className="flex-1">
-              <Text className="text-[#475569] text-[11px] font-semibold uppercase tracking-wide mb-0.5">{memory.date}</Text>
+              <Text className="text-[#475569] text-[11px] font-semibold uppercase tracking-wide mb-0.5">
+                {memory.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </Text>
               <Text className="text-[#F8FAFC] text-[15px] font-bold tracking-tight">{memory.title}</Text>
             </View>
             <View className="px-2.5 py-1 rounded-[10px] border shrink-0" style={{ backgroundColor: memory.color + '18', borderColor: memory.color + '44' }}>
@@ -152,6 +83,7 @@ function FlameStats() {
 
 export default function MemoriesScreen() {
   const [filter, setFilter] = useState<MemoryType | 'all'>('all');
+  const { memories, isLoading } = useMemories();
 
   const filters: Array<{ key: MemoryType | 'all'; label: string }> = [
     { key: 'all', label: '✦ All' },
@@ -161,7 +93,7 @@ export default function MemoriesScreen() {
   ];
 
   const filtered =
-    filter === 'all' ? MOCK_MEMORIES : MOCK_MEMORIES.filter((m) => m.type === filter);
+    filter === 'all' ? memories : memories.filter((m) => m.type === filter);
 
   return (
     <View className="flex-1 bg-[#0F172A]">

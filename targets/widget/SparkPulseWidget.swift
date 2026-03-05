@@ -178,21 +178,15 @@ struct PhotoWidgetView: View {
             // because the extension cannot make network calls at render time.
             if let imageData = entry.imageData,
                let uiImage = UIImage(data: imageData) {
-                GeometryReader { geo in
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                }
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
             } else {
                 fallbackPhotoPlaceholder
             }
 
             // Sender name badge
             senderBadge(label: "📷 \(entry.surprise.senderName)")
-                .padding(.bottom, family == .systemSmall ? 4 : 12)
-                .padding(.leading, family == .systemSmall ? 4 : 12)
         }
         .clipped()
     }
