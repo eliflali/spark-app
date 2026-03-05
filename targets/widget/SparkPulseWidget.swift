@@ -42,6 +42,9 @@ struct SparkPulseEntry: TimelineEntry {
     let date: Date
     let surprise: WidgetSurprise
     let isPlaceholder: Bool
+    /// Pre-fetched image bytes (set for PHOTO type only).
+    /// Using Data instead of UIImage because widget entries must be Sendable.
+    var imageData: Data?
 }
 
 // MARK: - Timeline Provider
@@ -50,24 +53,25 @@ struct SparkPulseProvider: TimelineProvider {
 
     // Placeholder shown during widget gallery / configuration
     func placeholder(in context: Context) -> SparkPulseEntry {
-        SparkPulseEntry(date: Date(), surprise: .placeholder, isPlaceholder: true)
+        SparkPulseEntry(date: Date(), surprise: .placeholder, isPlaceholder: true, imageData: nil)
     }
 
     // Snapshot shown in the widget picker — use cached data for speed
     func getSnapshot(in context: Context, completion: @escaping (SparkPulseEntry) -> Void) {
-        completion(SparkPulseEntry(date: Date(), surprise: cachedSurprise(), isPlaceholder: false))
+        completion(SparkPulseEntry(date: Date(), surprise: cachedSurprise(),
+                                  isPlaceholder: false, imageData: loadCachedPhotoData()))
     }
 
     // Full timeline: try to fetch fresh data, fall back to cache
     func getTimeline(in context: Context, completion: @escaping (Timeline<SparkPulseEntry>) -> Void) {
         Task {
             let surprise = await fetchOrFallback()
-            // Refresh every 30 minutes by default; silent push will force early refresh
+            let imageData = surprise.type == .photo ? loadCachedPhotoData() : nil
+            // Refresh every 30 minutes; silent push will force early refresh via reloadAllTimelines()
             let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
-            let timeline = Timeline(
-                entries: [SparkPulseEntry(date: Date(), surprise: surprise, isPlaceholder: false)],
-                policy: .after(nextUpdate)
-            )
+            let entry = SparkPulseEntry(date: Date(), surprise: surprise,
+                                        isPlaceholder: false, imageData: imageData)
+            let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
             completion(timeline)
         }
     }
@@ -81,6 +85,24 @@ struct SparkPulseProvider: TimelineProvider {
             let decoded = try? JSONDecoder().decode(WidgetSurprise.self, from: data)
         else { return .placeholder }
         return decoded
+    }
+
+    /// Reads the pre-downloaded photo from the shared container file first,
+    /// then falls back to the UserDefaults bytes written simultaneously by WidgetDataBridge.
+    private func loadCachedPhotoData() -> Data? {
+        // Primary: shared container file (most reliable cross-process storage)
+        if let containerURL = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: kAppGroup) {
+            let fileURL = containerURL.appendingPathComponent("widget_photo.dat")
+            if let fileData = try? Data(contentsOf: fileURL), !fileData.isEmpty {
+                NSLog("[SparkPulseWidget] Loaded photo from file: %d bytes", fileData.count)
+                return fileData
+            }
+        }
+        // Fallback: UserDefaults (also written by WidgetDataBridge.cachePhoto)
+        let fallback = UserDefaults(suiteName: kAppGroup)?.data(forKey: "widgetPhotoData")
+        NSLog("[SparkPulseWidget] UserDefaults fallback photo: %d bytes", fallback?.count ?? 0)
+        return fallback
     }
 
     private func fetchOrFallback() async -> WidgetSurprise {
@@ -152,22 +174,25 @@ struct PhotoWidgetView: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            AsyncImage(url: URL(string: entry.surprise.content)) { phase in
-                switch phase {
-                case .success(let img):
-                    img.resizable().scaledToFill()
-                case .failure:
-                    fallbackPhotoPlaceholder
-                default:
-                    Color(hex: "#1E293B")
-                        .overlay(
-                            ProgressView().tint(DS.amber)
-                        )
+            // Use pre-cached image bytes — AsyncImage is NOT reliable in widget extensions
+            // because the extension cannot make network calls at render time.
+            if let imageData = entry.imageData,
+               let uiImage = UIImage(data: imageData) {
+                GeometryReader { geo in
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
                 }
+            } else {
+                fallbackPhotoPlaceholder
             }
 
             // Sender name badge
             senderBadge(label: "📷 \(entry.surprise.senderName)")
+                .padding(.bottom, family == .systemSmall ? 4 : 12)
+                .padding(.leading, family == .systemSmall ? 4 : 12)
         }
         .clipped()
     }
@@ -179,9 +204,12 @@ struct PhotoWidgetView: View {
                     Image(systemName: "photo")
                         .font(.system(size: 32, weight: .light))
                         .foregroundStyle(DS.slate)
-                    Text("Photo from \(entry.surprise.senderName)")
+                    Text("Memory Loading…")
                         .font(.system(size: 12))
                         .foregroundStyle(DS.slate)
+                    Text("from \(entry.surprise.senderName)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(DS.slate.opacity(0.6))
                 }
             )
     }

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { NativeModules } from 'react-native';
@@ -81,6 +82,14 @@ export function useWidgetSurprise(): UseWidgetSurprise {
                         row.content,
                         row.sender_name ?? 'Partner'
                     );
+                    // Poll download result 3s later — visible in Metro without Xcode
+                    if (row.type === 'PHOTO') {
+                        setTimeout(() => {
+                            NativeModules.SparkWidget?.getPhotoDebugStatus?.((status: string) => {
+                                console.log(`[useWidgetSurprise] 📸 photo download status: ${status}`);
+                            });
+                        }, 3000);
+                    }
                 }
             }
         } catch (e: any) {
@@ -244,16 +253,30 @@ export function useWidgetSurprise(): UseWidgetSurprise {
                     localUri = tmpPath;
                 }
 
-                // Sanitize extension — picker URIs sometimes end with a UUID, not an extension
-                const rawExt = localUri.split('.').pop() ?? '';
-                const ext = /^(jpg|jpeg|png|gif|webp|heic)$/i.test(rawExt) ? rawExt.toLowerCase() : 'jpg';
+                // ── Compress image before upload ───────────────────────────────────────
+                // Widgets have a ~30 MB memory budget. High-res photos can silently crash
+                // the extension. Resize to max 1024 px wide and encode as JPEG @ 0.8.
+                console.log('[sendPhoto] compressing image (pass 1: 1024px / q0.8)...');
+                let compressed = await ImageManipulator.manipulateAsync(
+                    localUri,
+                    [{ resize: { width: 1024 } }],
+                    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+                );
+                // Quick size estimate: read a tiny bit to get file existence, then use
+                // base64 length after the full read. For now just always do one pass —
+                // 1024px @ 0.8 JPEG is well within widget budget for most photos.
+                localUri = compressed.uri;
+
+                // Always JPEG after manipulation
+                const ext = 'jpg';
                 const fileName = `${user!.id}_${Date.now()}.${ext}`;
 
-                // Read local file as Base64 and decode to ArrayBuffer for Supabase Storage
-                console.log('[sendPhoto] reading asset:', localUri, 'ext:', ext);
+                // Read compressed local file as Base64
+                console.log('[sendPhoto] reading compressed asset:', localUri);
                 const base64Str = await FileSystem.readAsStringAsync(localUri, {
                     encoding: FileSystem.EncodingType.Base64,
                 });
+                console.log(`[sendPhoto] base64 length: ${base64Str.length} (≈${Math.round(base64Str.length * 0.75 / 1024)} KB)`);
 
                 if (!base64Str) throw new Error('base64 read returned empty — file may be unreadable');
 
