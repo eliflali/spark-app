@@ -7,7 +7,7 @@ import GUIDED_DATES from '@/assets/guided-dates/guided-dates.json';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type MemoryType = 'spark' | 'photo' | 'date';
+export type MemoryType = 'spark' | 'photo' | 'note' | 'date';
 
 export interface Memory {
     id: string; // mapped from memory_id

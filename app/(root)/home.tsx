@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import * as SecureStore from 'expo-secure-store';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
@@ -25,10 +25,10 @@ import Animated, {
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/context/AuthContext';
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
-import { ONBOARDING_KEY } from '@/src/lib/constants';
 import { useActiveSession } from '@/src/hooks/useActiveSession';
 import { useDailySpark } from '@/src/hooks/useDailySpark';
 import { useWidgetSurprise } from '@/src/hooks/useWidgetSurprise';
+import { useStreak } from '@/src/hooks/useStreak';
 
 import { PartnerHeader } from '@/src/components/home/PartnerHeader';
 import { IncomingInviteCard } from '@/src/components/home/IncomingInviteCard';
@@ -38,7 +38,7 @@ import { StickyNoteModal } from '@/src/components/home/StickyNoteModal';
 import type { PartnerProfile } from '@/src/components/home/types';
 
 export default function HomeScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { isPremium } = useRevenueCat();
   const router = useRouter();
 
@@ -58,6 +58,7 @@ export default function HomeScreen() {
   const { spark, myAnswer, partnerAnswer, sparkState, loading: loadingData, submitting, submitAnswer, error: sparkError } = useDailySpark();
 
   const { incomingSession, acceptSession } = useActiveSession();
+  const { streak, isLoading: loadingStreak } = useStreak();
 
   const logoScale = useSharedValue(1);
   const logoAnimStyle = useAnimatedStyle(() => ({
@@ -172,22 +173,6 @@ export default function HomeScreen() {
     } catch {}
   };
 
-  const handleSignOut = () => signOut();
-
-  const handleDebugReset = () => {
-    Alert.alert('🛠 Debug', 'Reset to fresh-install state?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reset',
-        style: 'destructive',
-        onPress: async () => {
-          await SecureStore.deleteItemAsync(ONBOARDING_KEY);
-          await signOut();
-        },
-      },
-    ]);
-  };
-
   return (
     <View className="flex-1 bg-midnight">
       <StatusBar style="light" />
@@ -202,35 +187,28 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="mb-[-16px]">
-          <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-2 flex-row items-center justify-between">
-            <PartnerHeader myProfile={myProfile} partner={partner} />
-          </Animated.View>
-
+        <View className="mb-0">
           <Animated.View entering={FadeInDown.delay(100).springify()} className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3">
-              <Animated.View style={logoAnimStyle} className="relative">
-                {incomingSession && (
-                  <View className="absolute -inset-2 rounded-full bg-spark/25" pointerEvents="none" />
-                )}
-                <Image
-                  source={require('@/assets/logo-transparent-bg.png')}
-                  className="h-10 w-10"
-                />
-              </Animated.View>
-              <View>
-                <Text className="text-[14px] font-light text-slate-muted">Good {getTimeOfDay()} {myProfile?.display_name?.split(' ')[0]}</Text>
-                <Text className="text-[28px] font-medium tracking-tight text-glacier">
-                  Welcome
-                </Text>
-              </View>
+            <View className="flex-col justify-center">
+              <Text className="text-[24px] font-light text-slate-muted leading-[34px] ">Good {getTimeOfDay()},</Text>
+              <Text className="text-[32px] font-bold tracking-wide text-spark leading-[38px]">
+                {myProfile?.display_name?.split(' ')[0] ?? 'there'}
+              </Text>
             </View>
-            {isPremium && (
-              <View className="rounded-full border border-spark bg-spark/12 px-3 py-1.5">
-                <Text className="text-[11px] font-bold text-spark">✦ Premium</Text>
+          </Animated.View>
+          <View className="absolute -top-6 right-0 flex-row items-center gap-2">
+            {!loadingStreak && streak > 0 && (
+              <View className="rounded-full border border-rose/30 bg-rose/10 px-3 py-1 flex-row items-center gap-1.5 shadow-sm">
+                <Ionicons name="flame" size={12} color="#FB7185" />
+                <Text className="text-[10px] font-bold text-rose tracking-wider">{streak} DAY STREAK</Text>
               </View>
             )}
-          </Animated.View>
+            {isPremium && (
+              <View className="rounded-full border border-spark bg-spark/12 px-3 py-1">
+                <Text className="text-[10px] font-bold text-spark">✦ PREMIUM</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         <IncomingInviteCard incomingSession={incomingSession} onAccept={handleAcceptInvite} />
@@ -259,15 +237,6 @@ export default function HomeScreen() {
           handleWidgetPhoto={handleWidgetPhoto}
           handleWidgetReaction={handleWidgetReaction}
         />
-
-        <View className="mt-2 flex-row gap-2.5">
-          <TouchableOpacity onPress={handleSignOut} className="flex-1 items-center rounded-2xl border border-slate-muted/20 py-3" activeOpacity={0.7}>
-            <Text className="text-[13px] font-semibold text-[#64748B]">Sign Out</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDebugReset} className="flex-1 items-center rounded-2xl border border-rose/25 bg-rose/5 py-3" activeOpacity={0.7}>
-            <Text className="text-[13px] font-semibold text-rose">🛠 Reset</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {toastVisible && (

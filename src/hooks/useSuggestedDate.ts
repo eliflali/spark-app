@@ -16,6 +16,8 @@ export interface SuggestedDate {
 interface UseSuggestedDateReturn {
     /** The active suggested date for today, if one exists */
     suggestedDate: SuggestedDate | null;
+    /** Whether this suggested date has already been completed today by the couple */
+    isCompleted: boolean;
     /** User calls this to generate and insert a new suggested date */
     createSuggestion: (activityId: string, vibeData: any, spaceId: string) => Promise<SuggestedDate | null>;
     /** Re-fetch explicitly if needed */
@@ -27,6 +29,7 @@ interface UseSuggestedDateReturn {
 export function useSuggestedDate(): UseSuggestedDateReturn {
     const { user } = useAuth();
     const [suggestedDate, setSuggestedDate] = useState<SuggestedDate | null>(null);
+    const [isCompleted, setIsCompleted] = useState(false);
 
     // ── Initial fetch & Realtime ──────────────────────────────────────────────────
 
@@ -48,6 +51,28 @@ export function useSuggestedDate(): UseSuggestedDateReturn {
         if (error) {
             console.warn('[useSuggestedDate] fetchSuggestion error:', error.message);
             return;
+        }
+
+        if (suggestion) {
+            // Check if there is a completed session today for this template
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+
+            const { count, error: countError } = await supabase
+                .from('date_sessions')
+                .select('*', { count: 'exact', head: true })
+                .eq('space_id', spaceId)
+                .eq('template_id', suggestion.suggested_activity_id)
+                .or('status.eq.completed,is_completed.eq.true')
+                .gte('created_at', todayStart.toISOString());
+
+            if (!countError && count && count > 0) {
+                setIsCompleted(true);
+            } else {
+                setIsCompleted(false);
+            }
+        } else {
+            setIsCompleted(false);
         }
 
         setSuggestedDate(suggestion);
@@ -142,6 +167,7 @@ export function useSuggestedDate(): UseSuggestedDateReturn {
 
     return {
         suggestedDate,
+        isCompleted,
         createSuggestion,
         fetchSuggestion,
     };

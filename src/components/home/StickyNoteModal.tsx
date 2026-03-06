@@ -47,7 +47,7 @@ export function StickyNoteModal({
               multiline
               maxLength={140}
               autoFocus
-              className="mt-1 min-h-[110px] rounded-2xl border border-white/10 bg-white/5 p-4 text-base leading-6 text-[#E2EAF4]"
+              className="mt-1 min-h-[110px] max-h-[200px] rounded-2xl border border-white/10 bg-white/5 p-4 text-base leading-6 text-[#E2EAF4]"
               style={{ textAlignVertical: 'top' }}
             />
             <Text className="text-right text-xs text-[#475569]">{draftNote.length}/140</Text>

@@ -117,57 +117,78 @@ export function DailySparkCard({
   }));
 
   return (
-    <Animated.View entering={FadeInDown.delay(160).springify()}>
-      <BlurView
-        tint="dark"
-        intensity={100}
-        className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5">
-        <LinearGradient
-          colors={['rgba(255,255,255,0.03)', 'transparent']}
-          style={StyleSheet.absoluteFillObject}
-        />
-        <View className="gap-4 p-6">
-          <View className="self-start rounded-xl bg-spark/15 px-2.5 py-1">
-            <Text className="text-[11px] font-bold uppercase tracking-wider text-spark">
-              ✦ Today's Spark
-            </Text>
+    <Animated.View entering={FadeInDown.delay(160).springify()} className="relative">
+      {/* Background Mesh for the whole Daily Spark section */}
+      
+      <View className="gap-6 py-2">
+        <View className="self-center items-center w-[150px]">
+          <View className="border-b border-slate-muted/30 pb-1.5 items-center px-3">
+            <Text className="text-[11px] font-semibold uppercase tracking-widest text-slate-muted">Today's Question</Text>
           </View>
+        </View>
 
-          {loadingData ? (
-            <ActivityIndicator color="#F59E0B" style={{ marginVertical: 24 }} />
-          ) : spark ? (
-            <Text className="text-lg font-semibold leading-[27px] tracking-tight text-glacier">
-              {spark.question_text}
-            </Text>
-          ) : (
-            <Text className="text-[13px] font-semibold leading-[27px] tracking-tight text-slate-muted">
-              {sparkError ?? 'No spark today — check back tomorrow! ✨'}
-            </Text>
-          )}
+        {loadingData ? (
+          <ActivityIndicator color="#F59E0B" style={{ marginVertical: 24 }} />
+        ) : spark ? (
+          <Text className="text-[22px] font-small leading-[32px] tracking-tight text-glacier ml-2">
+            {spark.question_text}
+          </Text>
+        ) : (
+          <Text className="text-[15px] font-medium leading-[27px] tracking-tight text-slate-muted">
+            {sparkError ?? 'No spark today — check back tomorrow! ✨'}
+          </Text>
+        )}
 
-          {sparkError && spark && <Text className="mb-2 text-xs text-rose">⚠ {sparkError}</Text>}
+        {sparkError && spark && <Text className="mb-2 text-xs text-rose">⚠ {sparkError}</Text>}
 
-          <View
-            className="w-full flex-row gap-3"
-            onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
-            {sparkState === 'revealed' ? (
-              <View className="relative w-full">
-                <ScrollView
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onMomentumScrollEnd={(e) => {
-                    const slideIndex = Math.round(e.nativeEvent.contentOffset.x / containerWidth);
-                    setActiveSlide(slideIndex);
-                  }}
-                  className="h-[160px] w-full rounded-[20px]"
-                  contentContainerStyle={{ alignItems: 'center' }}>
-                  {/* Slide 1: User's Answer */}
-                  <View style={{ width: containerWidth }} className="h-full">
-                    <View className="relative mx-1 h-full flex-1 rounded-[20px] border border-white/10 bg-white/5 p-4">
-                      <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#64748B]">
-                        You
-                      </Text>
+        <View
+          className="w-full"
+          onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
+          <View className="relative w-full">
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) => {
+                const slideIndex = Math.round(e.nativeEvent.contentOffset.x / containerWidth);
+                setActiveSlide(slideIndex);
+              }}
+              className="h-[180px] w-full"
+              contentContainerStyle={{ alignItems: 'center' }}>
+              
+              {/* Slide 1: User's Answer */}
+              <View style={{ width: containerWidth }} className="h-full">
+                <View className="relative h-full flex-1 rounded-[24px] border border-white/10 bg-slate-900/40 p-5 shadow-sm">
+                  <Text className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-muted/60">
+                    Your answer
+                  </Text>
+                  
+                  {sparkState === 'pending' ? (
+                    <View className="flex-1 ">
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => setIsWriting(true)}
+                        className="flex-1 rounded-xl p-4">
+                        <Text
+                          className={`text-[15px] leading-[22px] ${draftAnswer ? 'text-glacier' : 'text-slate-muted/60'}`}
+                          numberOfLines={3}>
+                          {draftAnswer || 'Tap to answer...'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleSubmitAnswer}
+                        disabled={!draftAnswer.trim() || submitting}
+                        activeOpacity={0.8}
+                        className={`mt-3 items-center rounded-xl bg-spark py-3 ${!draftAnswer.trim() || submitting ? 'opacity-40' : ''}`}>
+                        {submitting ? (
+                          <ActivityIndicator size="small" color="#0F172A" />
+                        ) : (
+                          <Text className="text-[14px] font-bold text-midnight">Send ✦</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View className="flex-1">
                       <Text
                         numberOfLines={4}
                         className="flex-1 text-[15px] leading-[22px] text-[#E2EAF4]">
@@ -183,179 +204,121 @@ export function DailySparkCard({
                         </TouchableOpacity>
                       )}
                     </View>
-                  </View>
-
-                  {/* Slide 2: Partner's Answer */}
-                  <View style={{ width: containerWidth }} className="h-full">
-                    <View className="relative mx-1 h-full flex-1 rounded-[20px] border border-white/10 bg-white/5 p-4">
-                      <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#64748B]">
-                        {partner?.display_name?.split(' ')[0] ?? 'Partner'}
-                      </Text>
-                      <Animated.View style={[{ flex: 1 }, revealAnimStyle]}>
-                        <Text
-                          numberOfLines={4}
-                          className="flex-1 text-[15px] leading-[22px] text-[#E2EAF4]">
-                          {partnerAnswer?.answer_text ?? ''}
-                        </Text>
-                        {(partnerAnswer?.answer_text?.length ?? 0) > 100 && (
-                          <TouchableOpacity
-                            onPress={() =>
-                              setExpandedAnswer({
-                                title: partner?.display_name?.split(' ')[0] ?? 'Partner',
-                                text: partnerAnswer.answer_text,
-                              })
-                            }
-                            className="mt-2 self-start">
-                            <Text className="text-[12px] font-medium text-spark">Read more</Text>
-                          </TouchableOpacity>
-                        )}
-                      </Animated.View>
-                    </View>
-                  </View>
-                </ScrollView>
-
-                {/* Pagination Dots */}
-                <View className="absolute bottom-[-16px] left-0 right-0 flex-row items-center justify-center gap-2">
-                  <View
-                    className={`h-1.5 w-1.5 rounded-full ${activeSlide === 0 ? 'w-4 bg-spark' : 'bg-slate-muted/40'}`}
-                  />
-                  <View
-                    className={`h-1.5 w-1.5 rounded-full ${activeSlide === 1 ? 'w-4 bg-spark' : 'bg-slate-muted/40'}`}
-                  />
+                  )}
                 </View>
               </View>
-            ) : (
-              // Pending / Waiting State
-              <>
-                <View className="relative h-[160px] flex-1 rounded-[20px] border border-white/10 bg-white/5 p-3.5">
-                  <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-glacier/50">
-                    You
+
+              {/* Slide 2: Partner's Answer */}
+              <View style={{ width: containerWidth }} className="h-full">
+                <View className="relative ml-4 h-full flex-1 overflow-hidden rounded-[24px] border border-white/10 bg-slate-900/40 p-5 shadow-sm">
+                  <Text className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#64748B] z-10">
+                    {partner?.display_name?.split(' ')[0] ?? 'Partner'}
                   </Text>
-                  {sparkState === 'pending' ? (
-                    <>
-                      <TouchableOpacity
-                        activeOpacity={0.7}
-                        onPress={() => setIsWriting(true)}
-                        className="flex-1 rounded-xl p-2">
-                        <Text
-                          className={`text-sm ${draftAnswer ? 'text-slate-muted' : 'text-slate-muted/40'}`}
-                          numberOfLines={3}>
-                          {draftAnswer || 'Tap to write your answer...'}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={handleSubmitAnswer}
-                        disabled={!draftAnswer.trim() || submitting}
-                        activeOpacity={0.8}
-                        className={`mt-2.5 items-center rounded-xl bg-spark py-2 ${!draftAnswer.trim() || submitting ? 'opacity-40' : ''}`}>
-                        {submitting ? (
-                          <ActivityIndicator size="small" color="#0F172A" />
-                        ) : (
-                          <Text className="text-[13px] font-bold text-midnight">Send ✦</Text>
-                        )}
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <View className="flex-1">
+                  
+                  {sparkState === 'revealed' ? (
+                    <Animated.View style={[{ flex: 1 }, revealAnimStyle]}>
                       <Text
                         numberOfLines={4}
-                        className="flex-1 text-sm leading-[21px] text-[#E2EAF4]">
-                        {myAnswer?.answer_text ?? ''}
+                        className="flex-1 text-[15px] leading-[22px] text-[#E2EAF4]">
+                        {partnerAnswer?.answer_text ?? ''}
                       </Text>
-                      {(myAnswer?.answer_text?.length ?? 0) > 80 && (
+                      {(partnerAnswer?.answer_text?.length ?? 0) > 100 && (
                         <TouchableOpacity
                           onPress={() =>
-                            setExpandedAnswer({ title: 'You', text: myAnswer.answer_text })
+                            setExpandedAnswer({
+                              title: partner?.display_name?.split(' ')[0] ?? 'Partner',
+                              text: partnerAnswer.answer_text,
+                            })
                           }
-                          className="mt-1 self-start">
+                          className="mt-2 self-start">
                           <Text className="text-[12px] font-medium text-spark">Read more</Text>
                         </TouchableOpacity>
                       )}
-                    </View>
+                    </Animated.View>
+                  ) : (
+                    <BlurView
+                      tint="light"
+                      intensity={20}
+                      className="absolute inset-0 items-center justify-center p-5">
+                      <Animated.View style={lockAnimStyle} className="mb-2 h-12 w-12 items-center justify-center rounded-full bg-white/10">
+                        <Ionicons name="lock-closed" size={20} color="#F8FAFC" />
+                      </Animated.View>
+                      <Text className="text-center font-serif text-[14px] font-medium text-white/80">
+                        {sparkState === 'waiting' ? 'Waiting for partner' : 'Locked'}
+                      </Text>
+                    </BlurView>
                   )}
                 </View>
+              </View>
 
-                <View className="relative h-[160px] flex-1 overflow-hidden rounded-[20px] border border-white/10 bg-white/5 p-3.5">
-                  <Text className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#64748B]">
-                    {partner?.display_name?.split(' ')[0] ?? 'Partner'}
-                  </Text>
-                  <BlurView
-                    tint="dark"
-                    intensity={sparkState === 'waiting' ? 100 : 72}
-                    style={StyleSheet.absoluteFillObject}>
-                    <View className="absolute -inset-10 opacity-30">
-                      <Animated.View style={[meshAnimStyle]} className="flex-1">
-                        <LinearGradient
-                          colors={['#4C1D95', '#C2410C', '#4C1D95']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={{ flex: 1, filter: 'blur(20px)' as any }}
-                        />
-                      </Animated.View>
-                    </View>
-                    <View className="flex-1 items-center justify-center gap-1.5 bg-black/20">
-                      <Animated.View style={lockAnimStyle}>
-                        <Ionicons name="lock-closed" size={22} color="#F8FAFC" />
-                      </Animated.View>
-                      {sparkState !== 'waiting' && (
-                        <Text className="text-center text-xs font-semibold text-slate-muted">
-                          Answer first
-                        </Text>
-                      )}
-                    </View>
-                  </BlurView>
-                </View>
-              </>
-            )}
+            </ScrollView>
+
+            {/* Pagination Dots */}
+            <View className="mt-4 flex-row items-center justify-center gap-2">
+              <View
+                className={`h-1.5 w-1.5 rounded-full ${activeSlide === 0 ? 'w-5 bg-spark' : 'bg-slate-muted/30'}`}
+              />
+              <View
+                className={`h-1.5 w-1.5 rounded-full ${activeSlide === 1 ? 'w-5 bg-spark' : 'bg-slate-muted/30'}`}
+              />
+            </View>
           </View>
         </View>
-      </BlurView>
-
-      {/* Writing State Modal */}
+      </View>
+      {/* Writing State Modal - Bottom Sheet Style */}
       <Modal visible={isWriting} animationType="fade" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1">
-          <BlurView
-            tint="dark"
-            intensity={80}
-            className="flex-1"
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View className="flex-1 justify-center p-6">
-            <View className="overflow-hidden rounded-[32px] border border-white/10 bg-slate-900/60 shadow-2xl">
-              <View className="p-6">
-                <Text className="mb-4 text-center font-serif text-[18px] tracking-wide text-glacier">
-                  Your Answer
-                </Text>
-                <TextInput
-                  value={draftAnswer}
-                  onChangeText={setDraftAnswer}
-                  placeholder="Share your thoughts honestly..."
-                  placeholderTextColor="#64748B"
-                  multiline
-                  autoFocus
-                  className="min-h-[220px] rounded-2xl bg-black/20 p-5 text-[16px] leading-[26px] text-[#E2EAF4]"
-                  style={{ textAlignVertical: 'top' }}
-                />
-                <View className="mt-5 flex-row gap-4">
-                  <TouchableOpacity
-                    onPress={() => setIsWriting(false)}
-                    className="flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white/5 py-4">
-                    <Text className="text-[14px] font-semibold text-[#94A3B8]">Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setIsWriting(false);
-                      // Don't auto-submit here, just save draft. The user can hit Send on the card.
-                    }}
-                    className="flex-1 items-center justify-center rounded-2xl bg-spark py-4 shadow-[0_0_12px_rgba(245,158,11,0.4)]">
-                    <Text className="text-[14px] font-bold text-midnight">Done</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+          className="flex-1 justify-end">
+          <TouchableOpacity 
+            className="absolute inset-0 z-0" 
+            activeOpacity={1} 
+            onPress={() => setIsWriting(false)}
+          >
+            <BlurView
+              tint="dark"
+              intensity={40}
+              className="flex-1"
+              style={StyleSheet.absoluteFillObject}
+            />
+          </TouchableOpacity>
+          <Animated.View entering={FadeInDown.springify()} className="z-10 bg-slate-900 border-t border-white/10 rounded-t-[40px] px-6 pt-2 pb-10 shadow-2xl">
+            {/* Grabber handle */}
+            <View className="w-12 h-1.5 rounded-full bg-white/20 self-center mb-6 mt-3" />
+            
+            <View className="flex-row items-center justify-between mb-4 px-2">
+              <Text className="font-serif text-[20px] tracking-wide text-glacier">
+                Your Answer
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsWriting(false)}
+                className="w-8 h-8 rounded-full bg-white/10 items-center justify-center">
+                <Ionicons name="close" size={18} color="#94A3B8" />
+              </TouchableOpacity>
             </View>
-          </View>
+            
+            <TextInput
+              value={draftAnswer}
+              onChangeText={setDraftAnswer}
+              placeholder="Share your thoughts honestly..."
+              placeholderTextColor="#64748B"
+              multiline
+              autoFocus
+              className="min-h-[160px] max-h-[250px] rounded-[24px] bg-black/20 p-5 pt-5 text-[16px] leading-[26px] text-[#E2EAF4] border border-white/5"
+              style={{ textAlignVertical: 'top' }}
+            />
+            
+            <TouchableOpacity
+              onPress={() => {
+                setIsWriting(false);
+                if (draftAnswer.trim()) {
+                  // Optionally submit here or just let user tap "Send" on the card
+                }
+              }}
+              className="mt-6 w-full items-center justify-center rounded-[20px] bg-spark py-4 shadow-[0_0_12px_rgba(245,158,11,0.3)]">
+              <Text className="text-[15px] font-bold text-midnight">Done</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
 

@@ -59,17 +59,17 @@ BEGIN
         
         UNION ALL
         
-        -- 3. PHOTOS (Widget Surprises)
+        -- 3. SURPRISES (Widget Surprises)
         SELECT 
             ws.id::text AS memory_id,
-            'photo'::text AS memory_type,
+            LOWER(ws.type)::text AS memory_type,
             ws.created_at AS created_at,
             'Widget Surprise'::text AS title,
-            ws.content AS preview, -- contains URL
-            '📸'::text AS emoji,
+            ws.content AS preview,
+            CASE WHEN ws.type = 'PHOTO' THEN '📸' ELSE '📝' END::text AS emoji,
             '#818CF8'::text AS color
         FROM public.widget_surprises ws
-        WHERE ws.couple_id = v_space_id AND ws.type = 'PHOTO'
+        WHERE ws.couple_id = v_space_id AND ws.type IN ('PHOTO', 'NOTE')
     ) combined
     ORDER BY created_at DESC
     LIMIT p_limit;

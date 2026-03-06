@@ -73,7 +73,7 @@ export default function DatesScreen() {
 
   // ── Real-time hooks ────────────────────────────────────────────────────────
   const { incomingSession, acceptSession, cancelSession, startSession } = useActiveSession();
-  const { suggestedDate, createSuggestion } = useSuggestedDate();
+  const { suggestedDate, isCompleted, createSuggestion } = useSuggestedDate();
 
   useEffect(() => {
     if (!user) return;
@@ -275,8 +275,20 @@ export default function DatesScreen() {
         {/* ── State A / B: The Daily Spark Matchmaker ── */}
         {!isLibraryExpanded && (
           <View>
-             {!suggestedDate ? (
+            {!suggestedDate ? (
                <VibeCheck onComplete={handleVibeCheckComplete} />
+             ) : isCompleted ? (
+                <View className="px-5">
+                   <BlurView tint="dark" intensity={50} className="w-full rounded-[32px] overflow-hidden p-[2px] items-center justify-center min-h-[160px]" style={{ shadowColor: '#10B981', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 24, elevation: 12 }}>
+                       <LinearGradient colors={['#FBBF2433', '#F59E0B0d', 'transparent']} className="absolute inset-0" />
+                       <View className="absolute inset-0 rounded-[30px] border-[1.5px] border-spark/30" pointerEvents="none" />
+                       <View className="w-16 h-16 rounded-full bg-spark/20 border border-spark/40 items-center justify-center mb-4">
+                           <Ionicons name="heart" size={28} color="#FBBF24" />
+                       </View>
+                       <Text className="text-glacier text-[20px] font-bold tracking-tighter text-center">Date Completed</Text>
+                       <Text className="text-slate-muted text-[14px] mt-2 text-center px-4">You and your partner have successfully connected today.</Text>
+                   </BlurView>
+                </View>
              ) : suggestedMatch ? (
                <TodayMatchCard 
                  activity={suggestedMatch.activity} 
@@ -294,7 +306,7 @@ export default function DatesScreen() {
                  activeOpacity={0.7}
                  className="py-3 px-6 flex-row items-center gap-2"
                >
-                 <Text className="text-white/80 text-[14px] tracking-wide">Browse Date Library</Text>
+                 <Text className="text-slate-muted text-[14px] tracking-wide">Browse Date Library</Text>
                </TouchableOpacity>
              </Animated.View>
           </View>

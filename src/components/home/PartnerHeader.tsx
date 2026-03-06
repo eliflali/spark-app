@@ -42,11 +42,21 @@ export function PartnerHeader({
       <AvatarCircle name={myProfile?.display_name ?? null} avatarUrl={myProfile?.avatar_url ?? null} />
 
       {/* Connecting line */}
-      <View className="relative mx-2 h-0.5 flex-1 items-center justify-center">
-        <View className="absolute bottom-0 left-0 right-0 top-0 rounded-sm bg-spark/20" />
+      <View className="relative mx-3 h-0.5 flex-1 items-center justify-center">
+        {/* Glow effect */}
+        <Animated.View style={animStyle} className="absolute -bottom-1 -left-1 -right-1 -top-1 rounded-sm">
+          <LinearGradient
+            colors={['transparent', 'rgba(245,158,11,0.6)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ flex: 1, filter: 'blur(4px)' as any }}
+          />
+        </Animated.View>
+
+        {/* Core silky line */}
         <Animated.View style={animStyle} className="absolute bottom-0 left-0 right-0 top-0 rounded-sm">
           <LinearGradient
-            colors={['transparent', '#F59E0B', 'transparent']}
+            colors={['transparent', '#FBCFE8', '#F59E0B', '#FBCFE8', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={{ flex: 1, borderRadius: 2 }}
@@ -55,7 +65,7 @@ export function PartnerHeader({
         
         <Image
           source={require('@/assets/logo-transparent-bg.png')}
-          className="absolute h-10 w-10"
+          className="absolute h-8 w-8"
         />
       </View>
 
