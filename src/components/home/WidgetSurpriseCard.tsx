@@ -142,16 +142,15 @@ export function WidgetSurpriseCard({
         )}
 
         {/* ── Action Bar (Translucent Pill) ── */}
-        <View className="relative mt-2">
+        <View className="relative mt-0">
           <Text
-            className="px-8 text-center font-semibold text-[16px] tracking-wide text-glacier w-full mb-8 mt-8"
-            style={{ fontWeight: '300' }}>
-            Would you like to surprise your partner?
+            className="px-8 text-center font-semibold text-[16px] tracking-wide text-glacier w-full mb-8 mt-8 uppercase">
+            Surprise your partner!
           </Text>
           <MotiView
             {...(glowProps as any)}
             style={{ width: '100%' }}>
-            <View className="flex-row items-center justify-center gap-3 px-6">
+            <View className="flex-row items-center justify-center gap-3 px-2">
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={handleWidgetPhoto}
@@ -174,7 +173,7 @@ export function WidgetSurpriseCard({
           
           {/* Dismissible Tip Card */}
           {showTip && (
-            <Animated.View entering={FadeInDown.springify()} exiting={FadeOut.duration(200)} className="mt-6 px-6">
+            <Animated.View entering={FadeInDown.springify()} exiting={FadeOut.duration(200)} className="mt-6 px-2">
               <View className="flex-row items-center justify-between bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl">
                 <View className="flex-row items-center gap-3">
                   <View className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 items-center justify-center shadow-inner">

@@ -24,6 +24,7 @@ import { useStreak } from '@/src/hooks/useStreak';
 import { MemoryCard } from '@/src/components/memories/MemoryCard';
 import { FlameStats } from '@/src/components/memories/FlameStats';
 import { HeatmapCalendar } from '@/src/components/memories/HeatmapCalendar';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function MemoriesScreen() {
   const { user, signOut } = useAuth();
@@ -114,7 +115,7 @@ export default function MemoriesScreen() {
 
   // 1. Top Section (Index 0)
   scrollChildren.push(
-    <View key="top-section" className="px-5 gap-4 mb-6">
+    <View key="top-section" className="px-5 gap-4 mb-6 mt-6">
       <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-1 flex-row items-center justify-between">
         <View>
           <Text className="text-glacier text-[30px] font-bold tracking-tighter">Our Flame</Text>
@@ -231,7 +232,11 @@ export default function MemoriesScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#0F172A]">
+    <View className="flex-1 bg-midnight">
+      <LinearGradient
+        colors={['rgba(142, 154, 175, 0.03)', 'rgba(142, 154, 175, 0.01)']}
+        style={StyleSheet.absoluteFillObject}
+      />
       <StatusBar style="light" />
 
       <ScrollView

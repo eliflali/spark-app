@@ -232,7 +232,7 @@ export default function InvitePartnerScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={{ flex: 1, backgroundColor: '#0B0F1A' }}>
+      <View className="bg-midnight" style={{ flex: 1 }}>
 
         {/* Skip */}
         <TouchableOpacity
@@ -260,12 +260,13 @@ export default function InvitePartnerScreen() {
 
           {/* Header */}
           <Text
-            style={{ color: '#E2EAF4', fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 12, letterSpacing: -1, lineHeight: 44 }}
+            style={{fontSize: 36, fontWeight: 'bold', textAlign: 'center', marginBottom: 12, letterSpacing: -1, lineHeight: 44 }}
+            className="text-glacier"
           >
             {'Invite your '}
-            <Text style={{ color: '#F59E0B' }}>partner</Text>
+            <Text className="text-spark">partner</Text>
           </Text>
-          <Text style={{ color: '#64748B', fontSize: 15, textAlign: 'center', lineHeight: 24, marginBottom: 32, paddingHorizontal: 16 }}>
+          <Text className="text-slate-muted" style={{ fontSize: 15, textAlign: 'center', lineHeight: 24, marginBottom: 32, paddingHorizontal: 16 }}>
             Every spark is brighter together. Connect with your partner to start your journey.
           </Text>
 
@@ -276,7 +277,7 @@ export default function InvitePartnerScreen() {
             style={{ width: '100%', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden', marginBottom: 16 }}
           >
             <View style={{ padding: 32, alignItems: 'center' }}>
-              <Text style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16, fontWeight: '600' }}>
+              <Text className="text-slate-muted" style={{fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 16, fontWeight: '600' }}>
                 Your Spark Code
               </Text>
 
@@ -285,11 +286,12 @@ export default function InvitePartnerScreen() {
               ) : (
                 <TouchableOpacity onPress={handleCopyCode} activeOpacity={0.7}>
                   <Text
-                    style={{ color: '#E2EAF4', fontWeight: 'bold', textAlign: 'center', fontSize: 40, letterSpacing: 4 }}
+                    style={{fontWeight: 'bold', textAlign: 'center', fontSize: 40, letterSpacing: 4 }}
+                    className="text-glacier"
                   >
                     {sparkCode}
                   </Text>
-                  <Text style={{ color: '#64748B', fontSize: 12, textAlign: 'center', marginTop: 12 }}>
+                  <Text className="text-slate-muted" style={{fontSize: 12, textAlign: 'center', marginTop: 12 }}>
                     {copied ? '✓ Copied!' : 'Tap to copy'}
                   </Text>
                 </TouchableOpacity>
@@ -316,7 +318,7 @@ export default function InvitePartnerScreen() {
               opacity: loading ? 0.5 : 1,
             }}
           >
-            <Text style={{ color: '#0B0F1A', fontSize: 17, fontWeight: 'bold' }}>Send Invite 💌</Text>
+            <Text className="text-midnight" style={{fontSize: 17, fontWeight: 'bold' }}>Send Invite</Text>
           </TouchableOpacity>
 
           {/* Waiting / joined indicator */}
@@ -324,10 +326,10 @@ export default function InvitePartnerScreen() {
             {!partnerJoined ? (
               <>
                 <ActivityIndicator size="small" color="#475569" />
-                <Text style={{ color: '#64748B', fontSize: 14 }}>Waiting for your partner to join...</Text>
+                <Text className="text-slate-muted" style={{fontSize: 14 }}>Waiting for your partner to join...</Text>
               </>
             ) : (
-              <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: 'bold' }}>
+              <Text className="text-spark" style={{fontSize: 14, fontWeight: 'bold' }}>
                 ✓ Partner joined! Taking you in...
               </Text>
             )}
@@ -347,10 +349,10 @@ export default function InvitePartnerScreen() {
             style={{ width: '100%', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}
           >
             <View style={{ padding: 28, alignItems: 'center' }}>
-              <Text style={{ color: '#64748B', fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 6, fontWeight: '600' }}>
+              <Text className="text-glacier" style={{fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, marginBottom: 6, fontWeight: '600' }}>
                 Have a code?
               </Text>
-              <Text style={{ color: '#475569', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+              <Text className="text-slate-muted" style={{fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
                 Enter your partner's Spark code to join their space.
               </Text>
 
@@ -362,7 +364,7 @@ export default function InvitePartnerScreen() {
                   if (joinError) setJoinError(null);
                 }}
                 placeholder="SP-XXXX"
-                placeholderTextColor="#334155"
+                placeholderTextColor="#94A3B8"
                 autoCapitalize="characters"
                 autoCorrect={false}
                 maxLength={7}
@@ -374,7 +376,7 @@ export default function InvitePartnerScreen() {
                   borderRadius: 16,
                   paddingVertical: 16,
                   paddingHorizontal: 20,
-                  color: '#E2EAF4',
+                  color: '#F8FAFC',
                   fontSize: 26,
                   fontWeight: 'bold',
                   textAlign: 'center',
@@ -395,12 +397,12 @@ export default function InvitePartnerScreen() {
                 onPress={handleJoinByCode}
                 disabled={joining || partnerCode.trim().length < 6}
                 activeOpacity={0.85}
+                className='bg-midnight'
                 style={{
                   width: '100%',
                   borderRadius: 20,
                   paddingVertical: 16,
                   alignItems: 'center',
-                  backgroundColor: '#1E293B',
                   borderWidth: 1,
                   borderColor: partnerCode.trim().length >= 6 ? '#F59E0B' : 'rgba(255,255,255,0.1)',
                   opacity: joining || partnerCode.trim().length < 6 ? 0.5 : 1,
@@ -409,8 +411,8 @@ export default function InvitePartnerScreen() {
                 {joining ? (
                   <ActivityIndicator color="#F59E0B" />
                 ) : (
-                  <Text style={{ color: '#F59E0B', fontSize: 16, fontWeight: 'bold' }}>
-                    Join Partner's Space 🔥
+                  <Text className="text-spark" style={{fontSize: 16, fontWeight: 'bold' }}>
+                    Join Partner's Space
                   </Text>
                 )}
               </TouchableOpacity>

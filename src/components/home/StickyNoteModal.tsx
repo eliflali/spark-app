@@ -1,6 +1,7 @@
 import { Modal, KeyboardAvoidingView, Pressable, View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export function StickyNoteModal({
   visible,
@@ -29,28 +30,31 @@ export function StickyNoteModal({
         className="flex-1 justify-end bg-black/55"
       >
         <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
-        <BlurView tint="dark" intensity={60} className="overflow-hidden rounded-t-[32px] border border-spark/20">
+        <BlurView tint="dark" intensity={60} className="overflow-hidden rounded-t-[32px]">
           <LinearGradient
-            colors={['rgba(245,158,11,0.1)', 'rgba(15,23,42,0.95)']}
+            colors={['rgba(15, 23, 42, 0.75)', 'rgba(15, 23, 42, 0.95)']}
             style={StyleSheet.absoluteFillObject}
           />
           <View className="gap-3 px-6 pb-10 pt-6">
             <View className="mb-1 h-1 w-9 self-center rounded-full bg-white/15" />
-            <Text className="text-xl font-bold tracking-tight text-glacier">✍️ Write a Sticky Note</Text>
-            <Text className="text-[13px] leading-[19px] text-[#64748B]">Only your partner will see this on their widget.</Text>
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="pencil" size={24} color="#F8FAFC" />
+              <Text className="text-xl font-bold tracking-tight text-glacier"> Write a Sticky Note</Text>
+            </View>
+            <Text className="text-[13px] leading-[19px] text-glacier">Only your partner will see this on their widget.</Text>
 
             <TextInput
               value={draftNote}
               onChangeText={setDraftNote}
               placeholder="Type something sweet..."
-              placeholderTextColor="#475569"
+              placeholderTextColor="#94A3B8"
               multiline
               maxLength={140}
               autoFocus
               className="mt-1 min-h-[110px] max-h-[200px] rounded-2xl border border-white/10 bg-white/5 p-4 text-base leading-6 text-[#E2EAF4]"
               style={{ textAlignVertical: 'top' }}
             />
-            <Text className="text-right text-xs text-[#475569]">{draftNote.length}/140</Text>
+            <Text className="text-right text-xs text-glacier">{draftNote.length}/140</Text>
 
             <TouchableOpacity
               onPress={handleSubmit}

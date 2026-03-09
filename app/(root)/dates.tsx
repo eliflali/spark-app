@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  StyleSheet
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { BlurView } from 'expo-blur';
@@ -13,12 +14,6 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   FadeInDown,
   FadeOut,
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -65,6 +60,8 @@ export default function DatesScreen() {
   const [spaceId, setSpaceId] = useState<string | null>(null);
   const [myName, setMyName] = useState('You');
   const [partnerName, setPartnerName] = useState('Partner');
+  const [hasPartner, setHasPartner] = useState(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
 
   const categories = (guidedDates as { guided_dates: Category[] }).guided_dates;
 
@@ -89,15 +86,20 @@ export default function DatesScreen() {
         if (profile?.space_id) setSpaceId(profile.space_id);
 
         if (profile?.partner_id) {
+          setHasPartner(true);
           const { data: partner } = await supabase
             .from('profiles')
             .select('display_name')
             .eq('id', profile.partner_id)
             .single();
           if (partner?.display_name) setPartnerName(partner.display_name.split(' ')[0]);
+        } else {
+          setHasPartner(false);
         }
       } catch (e) {
         console.warn('[DatesScreen] load error:', e);
+      } finally {
+        setIsProfileLoaded(true);
       }
     })();
   }, [user]);
@@ -200,7 +202,10 @@ export default function DatesScreen() {
   return (
     <View className="flex-1 bg-midnight">
       <StatusBar style="light" />
-
+      <LinearGradient
+        colors={['rgba(142, 154, 175, 0.03)', 'rgba(142, 154, 175, 0.01)']}
+        style={StyleSheet.absoluteFillObject}
+      />
       
 
       {/* Horizontal Carousels */}
@@ -209,7 +214,7 @@ export default function DatesScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Animated.View entering={FadeInDown.delay(50).springify()} className={`px-5 pb-5 ${Platform.OS === 'ios' ? 'pt-20' : 'pt-11'}`}>
+        <Animated.View entering={FadeInDown.delay(50).springify()} className={`px-5 pb-5 ${Platform.OS === 'ios' ? 'pt-24' : 'pt-11'}`}>
           {isLibraryExpanded ? (
             <TouchableOpacity 
               onPress={() => setIsLibraryExpanded(false)}
@@ -227,7 +232,10 @@ export default function DatesScreen() {
             </View>
           )}
         </Animated.View>
-        {/* ── Live Invitation Card (User B sees this) ── */}
+
+        {hasPartner ? (
+          <>
+            {/* ── Live Invitation Card (User B sees this) ── */}
         {incomingSession && (
           <Animated.View
             entering={FadeInDown.springify()}
@@ -242,10 +250,10 @@ export default function DatesScreen() {
               <View className="absolute top-0 bottom-0 left-0 right-0 rounded-[28px] border-[1.5px] border-[#F59E0B]/45" pointerEvents="none" />
               <View className="p-[22px] gap-3">
                 <View className="flex-row items-center gap-1.5 self-start bg-[#F59E0B]/15 px-2.5 py-1 rounded-xl border border-[#F59E0B]/30">
-                  <View className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-                  <Text className="text-[#F59E0B] text-[10px] font-extrabold tracking-widest">LIVE INVITE</Text>
+                  <View className="w-1.5 h-1.5 rounded-full bg-spark" />
+                  <Text className="text-spark text-[10px] font-extrabold tracking-widest">LIVE INVITE</Text>
                 </View>
-                <Text className="text-[#F8FAFC] text-[20px] font-bold tracking-tighter">
+                <Text className="text-spark text-[20px] font-bold tracking-tighter">
                   {(guidedDates as { guided_dates: Category[] }).guided_dates
                     .flatMap((c) => c.activities)
                     .find((a) => a.id === incomingSession.template_id)?.title ?? 'Guided Date'}
@@ -312,12 +320,45 @@ export default function DatesScreen() {
           </View>
         )}
 
+        
+          </>
+        ) : isProfileLoaded ? (
+          <Animated.View entering={FadeInDown.delay(300).springify()} className="items-center justify-center pt-8">
+            <View className="w-20 h-20 rounded-full items-center justify-center shadow-xl mb-6">
+              <Ionicons name="heart-half" size={32} color="#FBBF24" />
+            </View>
+            <Text className="text-glacier text-[22px] font-bold tracking-tight mb-2 text-center">Your Space Awaits</Text>
+            <Text className="text-slate-muted text-[15px] text-center ali leading-[22px] px-10 mb-8">
+              Guided Dates are designed for two. Connect with your partner to unlock science-backed experiences.
+            </Text>
+            
+            <View className="px-5 w-full">
+              <TouchableOpacity 
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  import('expo-router').then(({ router }) => {
+                    router.push('/(auth)/invite-partner');
+                  });
+                }}
+                activeOpacity={0.8}
+                className="w-full rounded-[20px] items-center justify-center overflow-hidden py-4 border border-spark/30"
+                style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 }}
+              >
+                <LinearGradient
+                  colors={['rgba(245,158,11,0.15)', 'rgba(245,158,11,0.05)']}
+                  className="absolute inset-0"
+                />
+                <Text className="text-spark text-[16px] font-bold tracking-wide">Invite Partner</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        ) : null}
         {/* ── Conversation Decks ── */}
         {!isLibraryExpanded && (
           <Animated.View entering={FadeInDown.delay(300).springify()} className="mt-8 mb-4">
             <View className="px-5 mb-4">
               <Text className="text-glacier text-[20px] font-bold tracking-tighter">Meaningful Conversations</Text>
-              <Text className="text-slate-muted text-[12px] mt-1">36 Questions to deepen connection</Text>
+              <Text className="text-slate-muted text-[12px] mt-1 mb-4">36 Questions to deepen connection</Text>
             </View>
             <ScrollView
               horizontal

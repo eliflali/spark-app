@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  StyleSheet,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
@@ -36,6 +37,7 @@ import { DailySparkCard } from '@/src/components/home/DailySparkCard';
 import { WidgetSurpriseCard } from '@/src/components/home/WidgetSurpriseCard';
 import { StickyNoteModal } from '@/src/components/home/StickyNoteModal';
 import type { PartnerProfile } from '@/src/components/home/types';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -44,6 +46,7 @@ export default function HomeScreen() {
 
   const [myProfile, setMyProfile] = useState<PartnerProfile | null>(null);
   const [partner, setPartner] = useState<PartnerProfile | null>(null);
+  const [hasPartner, setHasPartner] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [draftAnswer, setDraftAnswer] = useState('');
 
@@ -94,10 +97,13 @@ export default function HomeScreen() {
       try {
         const { data: profile } = await supabase.from('profiles').select('id, display_name, avatar_url, partner_id').eq('id', user.id).single();
         if (profile) {
-          setMyProfile({ id: profile.id, display_name: profile.display_name, avatar_url: profile.avatar_url });
+          setMyProfile({ id: profile.id, display_name: profile.display_name, avatar_url: profile.avatar_url, partner_id: profile.partner_id });
           if (profile.partner_id) {
+            setHasPartner(true);
             const { data: partnerData } = await supabase.from('profiles').select('id, display_name, avatar_url').eq('id', profile.partner_id).single();
             if (partnerData) setPartner(partnerData);
+          } else {
+            setHasPartner(false);
           }
         }
       } catch (e) {
@@ -175,6 +181,10 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-midnight">
+      <LinearGradient
+        colors={['rgba(142, 154, 175, 0.03)', 'rgba(142, 154, 175, 0.01)']}
+        style={StyleSheet.absoluteFillObject}
+      />
       <StatusBar style="light" />
 
       <ScrollView
@@ -196,7 +206,7 @@ export default function HomeScreen() {
               </Text>
             </View>
           </Animated.View>
-          <View className="absolute -top-6 right-0 flex-row items-center gap-2">
+          <View className="absolute top-1 right-0 flex-row items-center gap-2">
             {!loadingStreak && streak > 0 && (
               <View className="rounded-full border border-rose/30 bg-rose/10 px-3 py-1 flex-row items-center gap-1.5 shadow-sm">
                 <Ionicons name="flame" size={12} color="#FB7185" />
@@ -213,30 +223,61 @@ export default function HomeScreen() {
 
         <IncomingInviteCard incomingSession={incomingSession} onAccept={handleAcceptInvite} />
 
-        <DailySparkCard
-          loadingData={loadingData}
-          spark={spark}
-          sparkError={sparkError}
-          sparkState={sparkState}
-          draftAnswer={draftAnswer}
-          setDraftAnswer={setDraftAnswer}
-          myAnswer={myAnswer}
-          partner={partner}
-          partnerAnswer={partnerAnswer}
-          handleSubmitAnswer={handleSubmitAnswer}
-          submitting={submitting}
-        />
+        {hasPartner ? (
+          <>
+            <DailySparkCard
+              loadingData={loadingData}
+              spark={spark}
+              sparkError={sparkError}
+              sparkState={sparkState}
+              draftAnswer={draftAnswer}
+              setDraftAnswer={setDraftAnswer}
+              myAnswer={myAnswer}
+              partner={partner}
+              partnerAnswer={partnerAnswer}
+              handleSubmitAnswer={handleSubmitAnswer}
+              submitting={submitting}
+            />
 
-        <WidgetSurpriseCard
-          partnerSurprise={partnerSurprise}
-          latestSurprise={latestSurprise}
-          myUserId={user?.id}
-          partnerFirstName={partnerFirstName}
-          sendingSurprise={sendingSurprise}
-          onOpenNoteModal={() => setNoteModalVisible(true)}
-          handleWidgetPhoto={handleWidgetPhoto}
-          handleWidgetReaction={handleWidgetReaction}
-        />
+            <WidgetSurpriseCard
+              partnerSurprise={partnerSurprise}
+              latestSurprise={latestSurprise}
+              myUserId={user?.id}
+              partnerFirstName={partnerFirstName}
+              sendingSurprise={sendingSurprise}
+              onOpenNoteModal={() => setNoteModalVisible(true)}
+              handleWidgetPhoto={handleWidgetPhoto}
+              handleWidgetReaction={handleWidgetReaction}
+            />
+          </>
+        ) : !loadingProfile ? (
+          <Animated.View entering={FadeInDown.delay(300).springify()} className="items-center justify-center pt-8">
+            <View className="w-20 h-20 rounded-full items-center justify-center shadow-xl mb-6">
+              <Ionicons name="heart-half" size={32} color="#FBBF24" />
+            </View>
+            <Text className="text-glacier text-[22px] font-bold tracking-tight mb-2 text-center">Your Space Awaits</Text>
+            <Text className="text-slate-muted text-[15px] text-center leading-[22px] px-6 mb-8">
+              Spark is designed for two. Connect with your partner to unlock the Daily Spark, Widget Surprises, and more.
+            </Text>
+            
+            <TouchableOpacity 
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push('/(auth)/invite-partner');
+              }}
+              activeOpacity={0.8}
+              className="w-full rounded-[20px] items-center justify-center overflow-hidden py-4 border border-spark/30"
+              style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 }}
+            >
+              <LinearGradient
+                colors={['rgba(245,158,11,0.15)', 'rgba(245,158,11,0.05)']}
+                className="absolute inset-0"
+              />
+              <Text className="text-spark text-[16px] font-bold tracking-wide">Invite Partner</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        ) : null}
+
       </ScrollView>
 
       {toastVisible && (
