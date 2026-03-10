@@ -87,7 +87,7 @@ export function TodayMatchCard({ activity, category, onStartPress }: Props) {
               {activity.title}
             </Text>
             
-            <Text className="text-glacier/50 text-[14px] leading-6 mb-8 font-medium">
+            <Text className="text-slate-muted text-[14px] leading-6 mb-8 font-medium">
               {activity.desc}
             </Text>
           </Animated.View>

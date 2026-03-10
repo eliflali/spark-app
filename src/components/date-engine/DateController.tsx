@@ -112,24 +112,24 @@ function SuccessScreen({
         {/* Trophy icon */}
         <View className="w-[72px] h-[72px] rounded-full overflow-hidden items-center justify-center" style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 10 }}>
           <LinearGradient colors={['#FBBF24', '#F59E0B', '#D97706']} className="absolute top-0 bottom-0 left-0 right-0" />
-          <Text className="text-[#F59E0B] text-[28px] font-bold">✦</Text>
+          <Text className="text-spark text-[28px] font-bold">✦</Text>
         </View>
 
-        <Text className="text-[#F8FAFC] text-[26px] font-bold tracking-tighter text-center">Session Complete!</Text>
-        <Text className="text-[#94A3B8] text-[14px] text-center leading-[21px]">{modeLabels[activity.mode]}: {activity.title}</Text>
+        <Text className="text-glacier text-[26px] font-bold tracking-tighter text-center">Session Complete!</Text>
+        <Text className="text-slate-muted text-[14px] text-center leading-[21px]">{modeLabels[activity.mode]}: {activity.title}</Text>
 
         {/* Spark Score */}
-        <View className="flex-row items-center justify-between w-full bg-[#F59E0B]/10 rounded-2xl p-4 border border-[#F59E0B]/15">
-          <Text className="text-[#F8FAFC] text-[15px] font-semibold">Spark Score</Text>
-          <View className="bg-[#F59E0B] rounded-xl px-3.5 py-1">
-            <Text className="text-[#0F172A] font-extrabold text-[16px]">{sparkScore}</Text>
+        <View className="flex-row items-center justify-between w-full bg-spark/10 rounded-2xl p-4 border border-[#F59E0B]/15">
+          <Text className="text-glacier text-[15px] font-semibold">Spark Score</Text>
+          <View className="bg-spark rounded-xl px-3.5 py-1">
+            <Text className="text-midnight font-extrabold text-[16px]">{sparkScore}</Text>
           </View>
         </View>
 
 
         {/* Dismiss */}
         <TouchableOpacity
-          className="bg-[#F59E0B] rounded-[20px] py-4 px-10 w-full items-center"
+          className="bg-spark rounded-[20px] py-4 px-10 w-full items-center"
           style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 }}
           activeOpacity={0.85}
           onPress={() => {
@@ -137,7 +137,7 @@ function SuccessScreen({
             onDismiss();
           }}
         >
-          <Text className="text-[#0F172A] font-bold text-[16px]">Back to Dates ✦</Text>
+          <Text className="text-midnight font-bold text-[16px]">Back to Dates ✦</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

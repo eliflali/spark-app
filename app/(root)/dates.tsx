@@ -44,6 +44,9 @@ import { TodayMatchCard } from '@/src/components/guided-dates/TodayMatchCard';
 import { ConversationDeckCard, type DeckData } from '@/src/components/guided-dates/ConversationDeckCard';
 import { ConversationDeckController } from '@/src/components/guided-dates/ConversationDeckController';
 
+// Library
+import { DateLibrary } from '@/src/components/guided-dates/DateLibrary';
+
 
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -363,7 +366,7 @@ export default function DatesScreen() {
           <Animated.View entering={FadeInDown.delay(300).springify()} className="mt-8 mb-4">
             <View className="px-5 mb-4">
               <Text className="text-glacier text-[20px] font-bold tracking-tighter">Meaningful Conversations</Text>
-              <Text className="text-slate-muted text-[12px] mt-1 mb-4">36 Questions to deepen connection</Text>
+              <Text className="text-slate-muted text-[14px] mt-2 mb-4">36 Questions to deepen connection</Text>
             </View>
             <ScrollView
               horizontal
@@ -388,34 +391,11 @@ export default function DatesScreen() {
         )}
 
         {/* ── State C: The Library ── */}
-        {isLibraryExpanded && categories.length > 0 && (
-          <View>
-            {categories.map((cat, ci) => (
-              <Animated.View key={cat.category} entering={FadeInDown.delay(150 + ci * 40).springify()}>
-            <View className="px-5 mb-4">
-              <Text className="text-glacier text-[18px] font-bold tracking-tighter">{cat.category}</Text>
-              <Text className="text-slate-muted text-[12px] mt-1 italic">{cat.scientific_basis}</Text>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 12, paddingBottom: 30}}
-              snapToInterval={176}
-              decelerationRate="fast"
-            >
-              {cat.activities.map((activity) => (
-                <AnimatedGradientCard
-                  key={activity.id}
-                  activity={activity as Activity}
-                  category={cat.category}
-                  onPress={() => handleCardPress(activity as Activity, cat.scientific_basis, cat.category)}
-                />
-              ))}
-            </ScrollView>
-          </Animated.View>
-        ))}
-          </View>
+        {isLibraryExpanded && (
+          <DateLibrary 
+            categories={categories} 
+            onCardPress={handleCardPress} 
+          />
         )}
 
         <View className="h-[120px]" />

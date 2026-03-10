@@ -55,7 +55,7 @@ export function ConversationDeckCard({ deck, onPress, index }: Props) {
       <TouchableOpacity 
         onPress={onPress} 
         activeOpacity={0.85}
-        className="w-[160px] h-[220px] rounded-[24px] overflow-hidden"
+        className="w-[160px] h-[200px] rounded-[24px] overflow-hidden"
         style={{
           shadowColor: gradients[0].replace('0.4', '1'),
           shadowOffset: { width: 0, height: 8 },
@@ -79,16 +79,8 @@ export function ConversationDeckCard({ deck, onPress, index }: Props) {
 
           {/* Top Section: Tag & Level */}
           <View className="flex-row justify-between items-start">
-            <View className="bg-white/10 px-2 py-1 rounded-md border border-white/10">
-              <Text className="text-white/80 text-[10px] font-medium tracking-widest uppercase">{deck.tag}</Text>
-            </View>
-            <View className="flex-row items-center gap-1 opacity-60">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <View 
-                  key={i} 
-                  className={`w-1.5 h-1.5 rounded-full ${i < deck.level ? 'bg-white' : 'bg-white/20'}`} 
-                />
-              ))}
+            <View className="bg-white/10 px-2 py-1 rounded-xl border border-white/10">
+              <Text className="text-glacier/80 text-[9px] font-bold tracking-widest uppercase">{deck.tag}</Text>
             </View>
           </View>
 
@@ -96,8 +88,8 @@ export function ConversationDeckCard({ deck, onPress, index }: Props) {
           <View className="gap-2">
             <Ionicons name={iconName} size={24} color="rgba(255,255,255,0.9)" />
             <View>
-              <Text className="text-white font-bold text-[18px] tracking-tight leading-6 mb-1">{deck.title}</Text>
-              <Text className="text-white/60 text-[11px] font-medium tracking-widest uppercase">{deck.vibe}</Text>
+              <Text className="text-glacier font-bold text-[18px] tracking-tight leading-6 mb-1">{deck.title}</Text>
+              <Text className="text-slate-muted text-[11px] font-medium tracking-widest uppercase">{deck.vibe}</Text>
             </View>
           </View>
         </BlurView>

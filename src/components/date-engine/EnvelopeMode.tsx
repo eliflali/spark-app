@@ -308,8 +308,8 @@ export default function EnvelopeMode({ activity, scientificBasis, category, onCo
         </Animated.View>
       ) : (
         <>
-          <View className="items-center gap-1.5 z-0">
-             <Text className="text-[11px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>{category}</Text>
+          <View className="items-center gap-2 z-0">
+             <Text className="text-[13px] font-bold uppercase tracking-[2px]" style={{ color: theme.textColor }}>{category}</Text>
              <Text className="text-slate-muted text-[14px] min-h-[20px] font-medium">
                {stage === 'sealed' ? 'Swipe up or tap to open your envelope' : ''}
              </Text>
