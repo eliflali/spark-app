@@ -77,7 +77,7 @@
                     "location": "OUTDOOR",
                     "energy": "MID",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 30,
+                    "estimated_time": 1800,
                     "desc": "Let the app decide every turn at intersections; get lost and explore together."
                 },
                 {
@@ -123,7 +123,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 1,
+                    "estimated_time": 20,
                     "desc": "Hold each other until both nervous systems regulate and relax (min 20 seconds)."
                 },
                 {
@@ -133,7 +133,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 1,
+                    "estimated_time": 6,
                     "desc": "A conscious connection longer than a peck to signal the brain to lower stress."
                 },
                 {
@@ -143,7 +143,7 @@
                     "location": "OUTDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 15,
+                    "estimated_time": 900,
                     "desc": "Walk hand-in-hand for 15 mins in total silence, focusing only on ambient sounds and breathing."
                 },
                 {
@@ -153,7 +153,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 30,
+                    "estimated_time": 1800,
                     "desc": "Guided non-genital touch session focusing purely on sensory pleasure without pressure."
                 },
                 {
@@ -163,7 +163,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 10,
+                    "estimated_time": 600,
                     "desc": "Sit eye-to-eye for 10 mins accompanied by a single scent (lavender, sandalwood, etc.)."
                 }
             ]
@@ -281,7 +281,7 @@
                     "location": "INDOOR",
                     "energy": "MID",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 5,
+                    "estimated_time": 300,
                     "desc": "Follow your partner's movements slowly like a mirror for 5 mins to sync brains."
                 },
                 {
@@ -291,7 +291,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 10,
+                    "estimated_time": 600,
                     "desc": "Sit back-to-back and try to align your breathing rhythms for 10 mins."
                 },
                 {
@@ -301,7 +301,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 4,
+                    "estimated_time": 240,
                     "desc": "Silent eye contact for 4 mins to activate emotional synchrony."
                 },
                 {
@@ -311,7 +311,7 @@
                     "location": "INDOOR",
                     "energy": "LOW",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 10,
+                    "estimated_time": 600,
                     "desc": "Focus purely on the release of physical tension during the embrace."
                 }
             ]
@@ -373,7 +373,7 @@
                     "location": "OUTDOOR",
                     "energy": "MID",
                     "connection_type": "TOGETHER",
-                    "estimated_time": 20,
+                    "estimated_time": 1200,
                     "desc": "Find 3 scents outdoors that remind you of childhood or early dating days."
                 },
                 {
