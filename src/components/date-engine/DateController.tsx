@@ -54,6 +54,7 @@ interface DateControllerProps {
   visible: boolean;
   activity: Activity | null;
   scientificBasis: string;
+  category: string;
   spaceId: string | null;
   /** Optional: live session ID for real-time sync between partners */
   sessionId?: string | null;
@@ -111,7 +112,7 @@ function SuccessScreen({
         {/* Trophy icon */}
         <View className="w-[72px] h-[72px] rounded-full overflow-hidden items-center justify-center" style={{ shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 10 }}>
           <LinearGradient colors={['#FBBF24', '#F59E0B', '#D97706']} className="absolute top-0 bottom-0 left-0 right-0" />
-          <Text className="text-[#0F172A] text-[28px] font-bold">✦</Text>
+          <Text className="text-[#F59E0B] text-[28px] font-bold">✦</Text>
         </View>
 
         <Text className="text-[#F8FAFC] text-[26px] font-bold tracking-tighter text-center">Session Complete!</Text>
@@ -125,22 +126,6 @@ function SuccessScreen({
           </View>
         </View>
 
-        {/* Share to Widget */}
-        <View className="flex-row items-center justify-between w-full bg-white/5 rounded-2xl p-4 border border-white/10 gap-3">
-          <View className="flex-1 gap-[3px]">
-            <Text className="text-[#F8FAFC] text-[14px] font-semibold">Share to Widget</Text>
-            <Text className="text-[#475569] text-[12px] leading-[17px]">Pin this memory to your partner's home screen</Text>
-          </View>
-          <Switch
-            value={shareEnabled}
-            onValueChange={(v) => {
-              setShareEnabled(v);
-              Haptics.selectionAsync();
-            }}
-            trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(245,158,11,0.4)' }}
-            thumbColor={shareEnabled ? '#F59E0B' : '#475569'}
-          />
-        </View>
 
         {/* Dismiss */}
         <TouchableOpacity
@@ -165,6 +150,7 @@ export default function DateController({
   visible,
   activity,
   scientificBasis,
+  category,
   spaceId,
   sessionId,
   myUserId,
@@ -232,7 +218,7 @@ export default function DateController({
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (photoUrl?: string) => {
     // Increment spark score
     const newScore = sparkScore + 1;
     setSparkScore(newScore);
@@ -262,6 +248,20 @@ export default function DateController({
             status: 'completed',
             last_interaction_at: new Date().toISOString(),
           });
+        }
+        
+        // If a photo was taken (e.g., from Envelope or Resonance mode), 
+        // save it as an "answer" to the session.
+        if (photoUrl && myUserId) {
+          const sid = sessionId || spaceId; // Use spaceId loosely if it's solo play
+          if (sid) {
+            await supabase.from('session_answers').insert({
+              session_id: sid,
+              user_id: myUserId,
+              step: 1, // Treat Envelope photo as step 1
+              photo_url: photoUrl
+            });
+          }
         }
       } catch (e) {
         console.warn('[DateController] Supabase update error:', e);
@@ -397,6 +397,7 @@ export default function DateController({
               <EnvelopeMode
                 activity={activity}
                 scientificBasis={scientificBasis}
+                category={category}
                 onComplete={handleComplete}
               />
             ) : (

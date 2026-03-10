@@ -54,6 +54,7 @@ export default function DatesScreen() {
   const [activeFilter, setActiveFilter] = useState<Mode | 'ALL'>('ALL');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedBasis, setSelectedBasis] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   // Track the sessionId of the session User A just started
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
@@ -104,7 +105,7 @@ export default function DatesScreen() {
     })();
   }, [user]);
 
-  const handleCardPress = useCallback(async (activity: Activity, basis: string) => {
+  const handleCardPress = useCallback(async (activity: Activity, basis: string, category: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     // If we have a spaceId, create (or retrieve) the pending session for User A
     if (spaceId) {
@@ -113,6 +114,7 @@ export default function DatesScreen() {
     }
     setSelectedActivity(activity);
     setSelectedBasis(basis);
+    setSelectedCategory(category);
   }, [spaceId, startSession]);
 
   // Accept the incoming invitation (User B flow)
@@ -124,11 +126,13 @@ export default function DatesScreen() {
     const allCats = (guidedDates as { guided_dates: Category[] }).guided_dates;
     let foundActivity: Activity | null = null;
     let foundBasis = '';
+    let foundCategory = '';
     for (const cat of allCats) {
       const a = cat.activities.find((x) => x.id === incomingSession.template_id);
       if (a) {
         foundActivity = a as Activity;
         foundBasis = cat.scientific_basis;
+        foundCategory = cat.category;
         break;
       }
     }
@@ -136,6 +140,7 @@ export default function DatesScreen() {
       setCurrentSessionId(incomingSession.id);
       setSelectedActivity(foundActivity);
       setSelectedBasis(foundBasis);
+      setSelectedCategory(foundCategory);
     }
   }, [incomingSession, acceptSession]);
 
@@ -152,7 +157,7 @@ export default function DatesScreen() {
   const handleVibeCheckComplete = async (data: VibeData) => {
     if (!spaceId) return;
 
-    let matches: { activity: Activity, basis: string }[] = [];
+    let matches: { activity: Activity, basis: string, category: string }[] = [];
 
     categories.forEach(cat => {
       cat.activities.forEach(act => {
@@ -169,7 +174,7 @@ export default function DatesScreen() {
         if (data.vibe === 'Fun' && isFun) score += 2;
 
         if (score >= 2) {
-          matches.push({ activity: act as Activity, basis: cat.scientific_basis });
+          matches.push({ activity: act as Activity, basis: cat.scientific_basis, category: cat.category });
         }
       });
     });
@@ -177,7 +182,7 @@ export default function DatesScreen() {
     if (matches.length === 0) {
       const randomCat = categories[Math.floor(Math.random() * categories.length)];
       const randomAct = randomCat.activities[Math.floor(Math.random() * randomCat.activities.length)];
-      matches.push({ activity: randomAct as Activity, basis: randomCat.scientific_basis });
+      matches.push({ activity: randomAct as Activity, basis: randomCat.scientific_basis, category: randomCat.category });
     }
 
     // Top 3 matches or whatever matches exist
@@ -192,7 +197,7 @@ export default function DatesScreen() {
     if (!suggestedDate) return null;
     for (const cat of categories) {
       const a = cat.activities.find((x) => x.id === suggestedDate.suggested_activity_id);
-      if (a) return { activity: a as Activity, basis: cat.scientific_basis };
+      if (a) return { activity: a as Activity, basis: cat.scientific_basis, category: cat.category };
     }
     return null;
   };
@@ -220,8 +225,8 @@ export default function DatesScreen() {
               onPress={() => setIsLibraryExpanded(false)}
               className="flex-row items-center gap-3 pt-2"
             >
-              <View className="bg-white/10 w-10 h-10 rounded-full items-center justify-center">
-                <Ionicons name="arrow-back" size={20} color="#F8FAFC" />
+              <View className="w-10 h-10 rounded-full items-center justify-center">
+                <Ionicons name="arrow-back" size={24} color="#F8FAFC" />
               </View>
               <Text className="text-glacier text-[28px] font-bold tracking-tighter">Library</Text>
             </TouchableOpacity>
@@ -301,7 +306,7 @@ export default function DatesScreen() {
                <TodayMatchCard 
                  activity={suggestedMatch.activity} 
                  category={suggestedMatch.basis} 
-                 onStartPress={() => handleCardPress(suggestedMatch.activity, suggestedMatch.basis)} 
+                 onStartPress={() => handleCardPress(suggestedMatch.activity, suggestedMatch.basis, suggestedMatch.category)} 
                />
              ) : null}
 
@@ -404,7 +409,7 @@ export default function DatesScreen() {
                   key={activity.id}
                   activity={activity as Activity}
                   category={cat.category}
-                  onPress={() => handleCardPress(activity as Activity, cat.scientific_basis)}
+                  onPress={() => handleCardPress(activity as Activity, cat.scientific_basis, cat.category)}
                 />
               ))}
             </ScrollView>
@@ -421,6 +426,7 @@ export default function DatesScreen() {
         visible={!!selectedActivity}
         activity={selectedActivity}
         scientificBasis={selectedBasis}
+        category={selectedCategory}
         spaceId={spaceId}
         sessionId={currentSessionId}
         myUserId={user?.id}
