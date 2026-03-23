@@ -9,11 +9,13 @@ import {
   StyleSheet,
   Alert,
   ActionSheetIOS,
+  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import * as SecureStore from 'expo-secure-store';
+import * as Haptics from 'expo-haptics';
 
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/context/AuthContext';
@@ -84,6 +86,36 @@ export default function MemoriesScreen() {
     );
   };
 
+  const handleEditName = () => {
+    if (!user) return;
+    Alert.prompt(
+      'Edit Profile',
+      'Enter your new display name:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Save',
+          onPress: async (newName?: string) => {
+            if (!newName || !newName.trim()) return;
+            try {
+              const { error } = await supabase
+                .from('profiles')
+                .update({ display_name: newName.trim() })
+                .eq('id', user.id);
+                
+              if (error) throw error;
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert('Success', 'Profile updated successfully!');
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to update name');
+            }
+          },
+        },
+      ],
+      'plain-text'
+    );
+  };
+
   const filters: Array<{ key: MemoryType | 'all'; label: string }> = [
     { key: 'all', label: '✦ All' },
     { key: 'spark', label: 'Sparks' },
@@ -121,9 +153,14 @@ export default function MemoriesScreen() {
           <Text className="text-glacier text-[30px] font-bold tracking-tighter">Our Flame</Text>
           <Text className="text-slate-muted text-[14px] mt-0.5">Your shared journey together</Text>
         </View>
-        <TouchableOpacity onPress={handleSettingsMenu} className="w-10 h-10 items-center justify-center" activeOpacity={0.7}>
-          <Ionicons name="ellipsis-vertical" size={20} color="#F8FAFC" />
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-1">
+          <TouchableOpacity onPress={handleEditName} className="w-10 h-10 items-center justify-center" activeOpacity={0.7}>
+            <Ionicons name="pencil" size={20} color="#64748B" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSettingsMenu} className="w-10 h-10 items-center justify-center" activeOpacity={0.7}>
+            <Ionicons name="ellipsis-vertical" size={20} color="#F8FAFC" />
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* Stats */}
@@ -245,7 +282,17 @@ export default function MemoriesScreen() {
         stickyHeaderIndices={stickyIndices}
       >
         {scrollChildren}
+        <View className="flex-row justify-center items-center gap-4 pt-20">
+                <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/sparktermsofuse/home')}>
+                  <Text className="text-white/40 text-[10px] uppercase tracking-wider font-semibold">Terms of Use</Text>
+                </TouchableOpacity>
+                <View className="w-[1px] h-3 bg-white/20" />
+                <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/spark-app-privacy-policy/home')}>
+                  <Text className="text-white/40 text-[10px] uppercase tracking-wider font-semibold">Privacy Policy</Text>
+                </TouchableOpacity>
+              </View>
       </ScrollView>
+      
     </View>
   );
 }

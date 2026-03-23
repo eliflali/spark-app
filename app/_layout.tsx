@@ -9,6 +9,7 @@ import * as SecureStore from 'expo-secure-store';
 import { supabase } from '@/src/lib/supabase';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
 import messaging from '@react-native-firebase/messaging';
+import { useScheduledNotifications } from '@/src/hooks/useScheduledNotifications';
 
 import '../global.css';
 
@@ -58,6 +59,9 @@ function RouteGuard() {
   const [hasOnboarded, setHasOnboarded] = useState(false);
   // null = not yet fetched, false = no partner, true = has partner
   const [hasPartner, setHasPartner] = useState<boolean | null>(null);
+
+  // Schedule local daily notifications once user is signed in
+  useScheduledNotifications();
 
   // Load onboarding flag once
   useEffect(() => {
