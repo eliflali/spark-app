@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  ImageBackground,
+  Animated,
   Linking,
   ScrollView,
   Text,
@@ -15,56 +15,57 @@ import { PurchasesPackage } from 'react-native-purchases';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 
 import { useRevenueCat } from '@/src/context/RevenueCatContext';
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const GOLD = '#F59E0B';
+const GOLD_DIM = 'rgba(245,158,11,0.55)';
+
 const FEATURES = [
-  { icon: '💡', label: 'Deepen your bond — science-backed daily questions.' },
-  { icon: '🎨', label: 'Stay playful — weekly mini-adventures for couples.' },
-  { icon: '🌱', label: 'Guided growth — expert-led intimacy exercises.' },
+  { icon: '✦', label: 'Science-backed daily questions to deepen your bond.' },
+  { icon: '◈', label: 'Weekly mini-adventures designed for couples.' },
+  { icon: '⟡', label: 'Expert-led intimacy exercises for guided growth.' },
 ];
 
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function PaywallScreen() {
   const router = useRouter();
   const { offering, loading, purchasePackage, restorePurchases, isPremium } = useRevenueCat();
   const [purchasing, setPurchasing] = useState(false);
-  const [restoring, setRestoring] = useState(false);
+  const [restoring, setRestoring]   = useState(false);
 
-  // Button Shimmer Animation
-  const shimmerOpacity = useSharedValue(0.4);
+  // Pulsing gold glow on the CTA button
+  const glowAnim = useRef(new Animated.Value(0.45)).current;
+  // Soft shimmer inside button
+  const shimmerAnim = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
-    shimmerOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1200 }),
-        withTiming(0.4, { duration: 1200 })
-      ),
-      -1,
-      true
-    );
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0.45, duration: 1400, useNativeDriver: true }),
+      ])
+    ).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: 0.55, duration: 1100, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0.25, duration: 1100, useNativeDriver: true }),
+      ])
+    ).start();
   }, []);
 
-  const animatedButtonStyle = useAnimatedStyle(() => ({
-    opacity: shimmerOpacity.value,
-  }));
-
-  // If the user somehow already is premium, boot them out
+  // Redirect premium users away
   useEffect(() => {
     if (isPremium) router.replace('/(root)/home');
   }, [isPremium]);
 
-  // The first package in the Main Offering (monthly)
   const pkg: PurchasesPackage | undefined = offering?.availablePackages[0];
 
   const priceString = pkg?.product.priceString ?? '$14.99';
-  const periodLabel = pkg?.product.subscriptionPeriod === 'P1M' ? '/month' : '';
+  const subscriptionPeriod = pkg?.product.subscriptionPeriod;
+  const periodLabel = subscriptionPeriod === 'P1Y' ? '/year' : subscriptionPeriod === 'P1M' ? '/month' : '/month';
+  const trialDays   = '7-Day';
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -77,10 +78,7 @@ export default function PaywallScreen() {
     setPurchasing(true);
     const success = await purchasePackage(pkg);
     setPurchasing(false);
-    if (success) {
-      // Direct them to create an account/log in FIRST
-      router.replace('/(auth)/login');
-    }
+    if (success) router.replace('/(auth)/login');
   };
 
   const handleRestore = async () => {
@@ -90,21 +88,18 @@ export default function PaywallScreen() {
     if (success) {
       router.replace('/(root)/home');
     } else {
-      Alert.alert('No purchases found', 'We couldn\'t find a previous subscription for this account.');
+      Alert.alert('No purchases found', "We couldn't find a previous subscription for this account.");
     }
   };
 
-  const handleSkip = async () => {
-    // Send to login first. ONBOARDING_KEY is set after invite-partner.
-    router.replace('/(auth)/login');
-  };
+  const handleSkip = () => router.replace('/(auth)/login');
 
   // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <View className="flex-1 bg-midnight items-center justify-center">
         <StatusBar style="light" />
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color={GOLD} />
         <Text className="text-slate-muted text-sm mt-4">Curating your experience…</Text>
       </View>
     );
@@ -115,153 +110,219 @@ export default function PaywallScreen() {
     <View className="flex-1 bg-midnight">
       <StatusBar style="light" />
 
-      {/* Cinematic Background */}
-      <View className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none">
-        <ImageBackground
-          source={require('../../assets/onboarding-images/hugging-couple.png')}
+      {/* ── Mesh Gradient Background ── */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
+        {/* Base deep midnight */}
+        <LinearGradient
+          colors={['#060D1F', '#0A1628', '#0F172A']}
+          locations={[0, 0.45, 1]}
           style={{ flex: 1 }}
-          resizeMode="cover"
-          blurRadius={10} // Adjusted blur for warm, candle-lit premium feel
-        >
-          <LinearGradient
-            colors={['rgba(15,23,42,0.4)', 'rgba(15,23,42,0.8)', '#0F172A']}
-            locations={[0, 0.4, 1]}
-            style={{ flex: 1 }}
-          />
-        </ImageBackground>
+        />
+        {/* Soft upper-left gold orb */}
+        <View style={{
+          position: 'absolute', top: -80, left: -60,
+          width: 340, height: 340,
+          borderRadius: 170,
+          backgroundColor: 'rgba(245,158,11,0.09)',
+        }} />
+        {/* Blue-violet lower-right orb */}
+        <View style={{
+          position: 'absolute', bottom: 60, right: -80,
+          width: 300, height: 300,
+          borderRadius: 150,
+          backgroundColor: 'rgba(99,102,241,0.11)',
+        }} />
+        {/* Indigo mid bleed */}
+        <View style={{
+          position: 'absolute', top: '38%', left: '25%',
+          width: 220, height: 220,
+          borderRadius: 110,
+          backgroundColor: 'rgba(79,70,229,0.07)',
+        }} />
+        {/* Frosted backdrop blur over the whole canvas */}
+        <BlurView tint="dark" intensity={65} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
       </View>
 
-      {/* Top bar */}
-      <View className="flex-row justify-between items-center px-6 pt-16 pb-2 z-10">
+      {/* ── Top Bar ── */}
+      <View className="flex-row justify-between items-center px-6 pt-20 pb-2 z-10">
         <TouchableOpacity onPress={handleSkip} hitSlop={12}>
-          <Text className="text-glacier text-sm font-medium tracking-wide uppercase">Skip for now</Text>
+          <Text className="text-slate-muted" style={{ fontSize: 12, fontWeight: '500', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            Skip for now
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleRestore} disabled={restoring} hitSlop={12}>
-          <Text className="text-glacier text-sm font-medium tracking-wide uppercase">
-            {restoring ? 'Restoring…' : 'Restore Purchases'}
+          <Text className="text-slate-muted" style={{ fontSize: 12, fontWeight: '500', letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            {restoring ? 'Restoring…' : 'Restore'}
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 48, paddingTop: 10 }}
+        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 56, paddingTop: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trial Badge */}
-        <View className="items-center mb-6">
-          <View className="px-5 py-1.5 rounded-full bg-spark/10 border border-spark">
-            <Text className="text-spark font-bold text-xs uppercase tracking-widest">
-              7-Day Free Trial
+        {/* ── Eyebrow: Product name (Serif) ── */}
+        <View style={{ alignItems: 'center', marginBottom: 2 }}>
+          <Text
+            className=""
+            style={{ fontSize: 13, letterSpacing: 3.5, textTransform: 'uppercase', color: GOLD_DIM }}
+          >
+            Spark Premium
+          </Text>
+        </View>
+
+        {/* ── Hero Headline (Serif) ── */}
+        <View style={{ alignItems: 'center', marginBottom: 28 }}>
+          <Text
+            className=""
+            style={{ fontSize: 38, lineHeight: 46, letterSpacing: -0.5, color: '#E2EAF4', textAlign: 'center' }}
+          >
+            Keep the{' '}
+            <Text style={{ color: GOLD }}>spark</Text>
+            {'\n'}alive.
+          </Text>
+        </View>
+
+        {/* ── Price Pill (translucent border container) ── */}
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
+          <View style={{
+            borderWidth: 1,
+            borderColor: 'rgba(245,158,11,0.22)',
+            borderRadius: 28,
+            backgroundColor: 'rgba(245,158,11,0.05)',
+            paddingHorizontal: 36,
+            paddingVertical: 18,
+            alignItems: 'center',
+          }}>
+            {/* Trial sub-label — subordinate */}
+            <Text style={{ fontSize: 11, fontWeight: '500', letterSpacing: 2.5,
+              textTransform: 'uppercase', color: 'rgba(245,158,11,0.65)', marginBottom: 10 }}>
+              {trialDays} Free Trial, then
+            </Text>
+
+            {/* Price — dominant */}
+            <Text className="text-glacier font-bold" style={{ fontSize: 54, letterSpacing: -2, lineHeight: 58 }}>
+              {priceString}
+            </Text>
+
+            {/* Period — below price, smaller */}
+            <Text style={{ fontSize: 14, fontWeight: '400', color: 'rgba(226,234,244,0.5)',
+              letterSpacing: 0.5, marginTop: 4 }}>
+              {periodLabel} · billed monthly
             </Text>
           </View>
         </View>
 
-        {/* Hero Hook */}
-        <View className="items-center mb-10">
-          <Text
-            className="text-glacier text-4xl font-bold mt-2 text-center"
-            style={{ letterSpacing: -1, lineHeight: 44 }}
-          >
-            Keep the <Text className="text-spark">spark</Text> alive.
-          </Text>
-          <Text className="text-white/60 text-base mt-3 text-center px-4 leading-6">
-            Less than the cost of one coffee date per month.
-          </Text>
-        </View>
-
-        {/* Refined Feature List with Glassmorphism */}
-        <BlurView
-          tint="dark"
-          intensity={60}
-          className="rounded-3xl border border-white/10 p-6 mb-10 gap-6 overflow-hidden bg-white/5"
-        >
-          {FEATURES.map((f, i) => (
-            <View key={i} className="flex-row items-center gap-4">
-              <View className="w-10 h-10 rounded-full bg-white/5 items-center justify-center border border-white/10">
-                <Text style={{ fontSize: 18 }}>{f.icon}</Text>
+        {/* ── Feature Capsules (floating glassmorphic) ── */}
+        <View style={{ gap: 10, marginBottom: 32 }}>
+          {FEATURES.map(({ icon, label }, i) => (
+            <BlurView
+              key={i}
+              tint="dark"
+              intensity={55}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: 'rgba(245,158,11,0.12)',
+                paddingHorizontal: 18,
+                paddingVertical: 14,
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Gold icon halo */}
+              <View style={{
+                width: 40, height: 40,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: 'rgba(245,158,11,0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: GOLD,
+                shadowOpacity: 0.35,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 0 },
+              }}>
+                <Text style={{ fontSize: 17, color: GOLD, fontWeight: '300' }}>{icon}</Text>
               </View>
-              <Text className="text-glacier text-base font-medium flex-1 leading-7">{f.label}</Text>
-            </View>
+              <Text
+                className=""
+                style={{ flex: 1, fontSize: 14, lineHeight: 21, color: 'rgba(226,234,244,0.88)' }}
+              >
+                {label}
+              </Text>
+            </BlurView>
           ))}
-        </BlurView>
-
-        {/* How Trial Works (Horizontal Trust Factor) */}
-        <View className="mb-10 px-2">
-          <Text className="text-white/50 text-xs font-bold uppercase tracking-widest mb-5 text-center">
-            How your trial works
-          </Text>
-          <View className="flex-row justify-between items-start">
-            <View className="items-center flex-1">
-              <Text style={{ fontSize: 24 }} className="mb-2">🔓</Text>
-              <Text className="text-white font-medium text-sm">Today</Text>
-              <Text className="text-white/50 text-[10px] text-center mt-1 leading-4">Unlock everything{'\n'}for $0</Text>
-            </View>
-            <View className="w-[1px] h-10 bg-white/10 mt-2" />
-            <View className="items-center flex-1">
-              <Text style={{ fontSize: 24 }} className="mb-2">🔔</Text>
-              <Text className="text-white font-medium text-sm">Day 5</Text>
-              <Text className="text-white/50 text-[10px] text-center mt-1 leading-4">We'll send a{'\n'}reminder</Text>
-            </View>
-            <View className="w-[1px] h-10 bg-white/10 mt-2" />
-            <View className="items-center flex-1">
-              <Text style={{ fontSize: 24 }} className="mb-2">✨</Text>
-              <Text className="text-white font-medium text-sm">Day 7</Text>
-              <Text className="text-white/50 text-[10px] text-center mt-1 leading-4">Cancel anytime{'\n'}before</Text>
-            </View>
-          </View>
         </View>
 
-        {/* Shimmering Subscribe CTA */}
-        <View className="mb-5">
+        {/* ── Subscribe CTA with outward gold glow ── */}
+        <View style={{ marginBottom: 14 }}>
+
           <TouchableOpacity
             onPress={handleSubscribe}
             disabled={purchasing || !pkg}
-            activeOpacity={0.8}
-            className="rounded-3xl py-4 items-center justify-center overflow-hidden relative"
+            activeOpacity={0.82}
             style={{
-              backgroundColor: purchasing ? '#92400e' : '#F59E0B',
-              shadowColor: '#F59E0B',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.5,
-              shadowRadius: 20,
+              borderRadius: 28,
+              paddingVertical: 18,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: purchasing ? '#92400e' : GOLD,
+              shadowColor: GOLD,
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.7,
+              shadowRadius: 28,
               minHeight: 68,
+              overflow: 'hidden',
             }}
           >
-            {/* Animated Shimmer Overlay */}
+            {/* Inner shimmer overlay */}
             {!purchasing && (
               <Animated.View
-                style={[
-                  animatedButtonStyle,
-                  { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.2)' }
-                ]}
                 pointerEvents="none"
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: 'rgba(255,255,255,0.22)',
+                  opacity: shimmerAnim,
+                }}
               />
             )}
-
             {purchasing ? (
               <ActivityIndicator color="#0F172A" />
             ) : (
-              <Text className="text-midnight text-[22px] font-bold">Start My 7-Day Free Trial</Text>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#0F172A', letterSpacing: 0.3 }}>
+                Subscribe Now!
+              </Text>
             )}
           </TouchableOpacity>
         </View>
 
-        <Text className="text-white/50 text-center font-medium mb-8">
-          Then {priceString}{periodLabel}. Cancel anytime.
+        {/* ── Footer copy ── */}
+        <Text className="text-slate-muted" style={{ fontSize: 11, fontWeight: '300',
+          textAlign: 'center', lineHeight: 18, marginBottom: 8, marginTop: 6 }}>
+          Cancel anytime before the trial ends and you won't be charged.
         </Text>
 
-        <Text className="text-white/30 text-xs text-center leading-5 flex-1 justify-end mb-4">
-          Subscription auto-renews at {priceString}{periodLabel} unless cancelled at
-          least 24 hours before the end of the period. Manage in App Store Settings.
+        <Text className="text-slate-muted" style={{ fontSize: 10, fontWeight: '300',
+          textAlign: 'left', lineHeight: 17, marginBottom: 20, paddingHorizontal: 8 }}>
+          Payment of {priceString}{periodLabel} will be charged to your Apple ID account at confirmation
+          of purchase. Subscription automatically renews unless cancelled at least 24 hours before
+          the end of the current period. Manage or cancel in App Store Settings → Subscriptions.
         </Text>
 
-        <View className="flex-row justify-center items-center gap-4 pt-2">
+        {/* ── Legal links ── */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
           <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/sparktermsofuse/home')}>
-            <Text className="text-white/40 text-[10px] uppercase tracking-wider font-semibold">Terms of Use</Text>
+            <Text className="text-slate-muted" style={{ fontSize: 10, fontWeight: '300',
+              textTransform: 'uppercase', letterSpacing: 1.2 }}>Terms of Use</Text>
           </TouchableOpacity>
-          <View className="w-[1px] h-3 bg-white/20" />
+          <View style={{ width: 1, height: 10, backgroundColor: 'rgba(255,255,255,0.15)' }} />
           <TouchableOpacity onPress={() => Linking.openURL('https://sites.google.com/view/spark-app-privacy-policy/home')}>
-            <Text className="text-white/40 text-[10px] uppercase tracking-wider font-semibold">Privacy Policy</Text>
+            <Text className="text-slate-muted" style={{ fontSize: 10, fontWeight: '300',
+              textTransform: 'uppercase', letterSpacing: 1.2 }}>Privacy Policy</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
