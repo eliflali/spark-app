@@ -1,52 +1,34 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { RevenueCatProvider } from '@/src/context/RevenueCatContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SecureStore from 'expo-secure-store';
-import { supabase } from '@/src/lib/supabase';
 import { ONBOARDING_KEY } from '@/src/lib/constants';
-import messaging from '@react-native-firebase/messaging';
 import { useScheduledNotifications } from '@/src/hooks/useScheduledNotifications';
-
+import * as Notifications from 'expo-notifications';
+import { supabase } from '@/src/lib/supabase';
 import '../global.css';
+import Constants from 'expo-constants';
 
-// ── FCM Token Registration ────────────────────────────────────────────────────
-// Requests notification permission (iOS) and saves the device's FCM token
-// to profiles.fcm_token so the Edge Function can send push notifications.
+async function registerForPushNotifications(userId) {
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== 'granted') return;
 
-async function registerFcmToken(userId: string) {
-  try {
-    // iOS: request notification permission
-    if (Platform.OS === 'ios') {
-      const authStatus = await messaging().requestPermission();
-      const allowed =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-      if (!allowed) {
-        console.warn('[FCM] Notification permission denied');
-        return;
-      }
-    }
+  // GET THE EXPO TOKEN (This works for both iOS and Android)
+  const tokenData = await Notifications.getExpoPushTokenAsync({
+    projectId: Constants.expoConfig.extra.eas.projectId,
+  });
+  const expoToken = tokenData.data;
 
-    const token = await messaging().getToken();
-    if (!token) {
-      console.warn('[FCM] getToken returned empty');
-      return;
-    }
+  console.log("Expo Token:", expoToken); // Should look like ExponentPushToken[...]
 
-    await supabase
-      .from('profiles')
-      .update({ fcm_token: token })
-      .eq('id', userId);
-
-    console.log('[FCM] Token registered for user', userId, '→', token.slice(0, 20) + '...');
-  } catch (err) {
-    // Firebase messaging not available in Expo Go — silently skip
-    console.warn('[FCM] Could not register token:', err);
-  }
+  // Save this to Supabase
+  await supabase
+    .from('profiles')
+    .update({ fcm_token: expoToken })
+    .eq('id', userId);
 }
 
 // ── Route Guard ───────────────────────────────────────────────────────────────
@@ -77,15 +59,7 @@ function RouteGuard() {
     let unsubscribe: (() => void) | undefined;
     (async () => {
       try {
-        await registerFcmToken(session.user.id);
-        // Keep token fresh if Firebase rotates it
-        unsubscribe = messaging().onTokenRefresh((newToken) => {
-          supabase
-            .from('profiles')
-            .update({ fcm_token: newToken })
-            .eq('id', session.user.id)
-            .then(() => console.log('[FCM] Token refreshed'));
-        });
+        await registerForPushNotifications(session.user.id);
       } catch (err) {
         console.warn('[FCM] Firebase not ready:', err);
       }

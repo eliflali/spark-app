@@ -1,12 +1,9 @@
 {
   "expo": {
     "name": "Spark",
-    "slug": "my-expo-app",
+    "slug": "sparkapp",
     "version": "1.0.0",
     "scheme": "sparkapp",
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "experiments": {
       "tsconfigPaths": true
     },
@@ -22,9 +19,7 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for video."
         }
       ],
-      "@bacons/apple-targets",
-      "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@bacons/apple-targets"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -37,11 +32,16 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "extra": {
+      "eas": {
+        "projectId": "496ef71f-8358-4bdc-8850-44dc27af9069"
+      }
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cankuslar.spark",
       "appleTeamId": "K58P9S6K53",
-      "googleServicesFile": "./ios/GoogleService-Info.plist",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "entitlements": {
         "aps-environment": "development",
         "com.apple.security.application-groups": [
